@@ -9,21 +9,25 @@ type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Sat
 interface Course {
     name: string;
     day: Weekday;
+    time?: string;
     category: 'calculation' | 'coding' | 'theory';
     intensity: 'hard' | 'easy' | 'mid' | 'hard-to-grasp' | 'bulky' | 'both-hard-bulky';
+    startTime?: string;
+    endTime?: string;
 }
 
 export default function Logic() {
     const [form, setForm] = useState<Course>({
         name: '',
         day: 'Monday',
+        time:'',
         category: 'calculation',
         intensity: 'mid',
+        startTime:'',
+        endTime:''
     });
 
-    // This state will hold the courses for the day you want to schedule
     const [coursesToSchedule, setCoursesToSchedule] = useState<Course[]>([]);
-    // NEW STATE: This will hold the day being scheduled
     const [dayToSchedule, setDayToSchedule] = useState<string>("");
 
     const [schedule, setSchedule] = useState<Course[]>([]);
@@ -71,8 +75,11 @@ export default function Logic() {
         setForm({
             name: '',
             day: 'Monday',
+            time: '',
             category: 'calculation',
             intensity: 'mid',
+            startTime:'',
+            endTime:''
         });
     }
     
@@ -99,12 +106,20 @@ export default function Logic() {
         <div className="p-6 max-w-2xl mx-auto font-sans bg-gray-50 rounded-lg shadow-md">
             <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Create Your Timetable</h1>
             <div className="space-y-4 mb-8 p-4 border rounded-lg bg-white">
-                <Input
-                    placeholder="Course Name"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full"
-                />
+                <div className="flex">
+                    <Input
+                        placeholder="Course Name e.g MTH"
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        className="w-full"
+                    />
+                    <Input
+                        placeholder="e.g 10am to 12pm or 10am - 12pm"
+                        value={form.time}
+                        onChange={(e) => setForm({ ...form, time: e.target.value })}
+                        className="w-full"
+                    />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                     <select
                         value={form.day}
