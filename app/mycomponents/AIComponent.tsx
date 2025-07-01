@@ -4,13 +4,12 @@ import { supabase } from "@/supabaseClient";
 import { useState, FormEvent, useEffect } from "react";
 import Markdown from 'react-markdown'
 
+type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 type messages = {
     content: string,
     role: string,
     type: string
 }
-
-type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 
 interface Course {
     name: string;
@@ -24,35 +23,31 @@ interface Course {
 interface AIChatProps {
   coursesForDay: Course[];
   day: string;
+  chatId:string;
 }
 
-export default function AIChatComponent({ coursesForDay, day }: AIChatProps) {
-  const [chatId, setChatId] = useState<string | null>(null);
+interface Extract{
+  Day:string; Course: string; Start: string; End: string
+}
+interface Table{
+  Courses:Course[];
+  Priority_Grouped:Course[];
+  schedule: Extract[];
+}
+
+export default function AIChatComponent({ coursesForDay, day, chatId }: AIChatProps) {
   const [input, setInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [messageList, setMessageList] = useState<messages[]>([]);
-
+  const [timeTable,setTimeTable] = useState<Table[]>([]);
   const courseNames = coursesForDay.map((course) => course.name).join(", ");
 
-  // 🔹 On mount, create a session if none exists + fetch messages
+  // create a session if none exists + fetch messages
   useEffect(() => {
     const init = async () => {
-      if (chatId !== null) {
-        // 2. Fetch old messages (if any)
-        const { data: oldMessages } = await supabase
-          .from("chat_messages")
-          .select("role, content")
-          .eq("chat_id", chatId)
-          .order("created_at", { ascending: true });
-         console.log("Message found");
-        setMessageList(
-          (oldMessages || []).map((msg) => ({
-              ...msg,
-              type: "text",
-          }))
-          );
-      }else{
+      if (chatId) {
         createSession();
+      }else{
       }
     };
 
@@ -60,16 +55,28 @@ export default function AIChatComponent({ coursesForDay, day }: AIChatProps) {
   }, [chatId]);
 
   const createSession= async () => {
-    const { data: session, error } = await supabase
+      await supabase
         .from("chat_sessions")
-        .insert({ title: `Chat for ${day}` })
-        .select()
-        .single();
-        setChatId(session.id);
+        .insert({id: chatId, title: `Chat for ${day}` })
+
+      // if(session.id){
+      //   const { data: oldMessages } = await supabase
+      //     .from("chat_messages")
+      //     .select("role, content")
+      //     .eq("chat_id", chatId)
+      //     .order("created_at", { ascending: true });
+      //    console.log("Message found");
+      //   setMessageList(
+      //     (oldMessages || []).map((msg) => ({
+      //         ...msg,
+      //         type: "text",
+      //     }))
+      //     );
+      // }  
     console.log("Session Created");
   }
 
-  // 🔹 After AI response is in, extract time
+  // After AI response is in, extract time
   useEffect(() => {
     if (messageList.length === 0) return;
     const last = messageList[messageList.length - 1];
@@ -119,25 +126,59 @@ export default function AIChatComponent({ coursesForDay, day }: AIChatProps) {
     setIsLoading(false);
   };
 
+  //EXTRACTION PHASSEEEE!!!!
   const cleanText = (text: string) =>
-    text.trim().replace(/\r\n/g, "\n").replace(/\n{2,}/g, "\n").replace(/\s{2,}/g, " ");
+    text
+      .replace(/\r\n|\r/g, "\n")           // Normalize all line endings
+      .replace(/\n{2,}/g, "\n\n")          // Collapse multiple blank lines into one paragraph break
+      .replace(/[ \t]{2,}/g, " ")          // Collapse extra spaces/tabs
+      .trim();
 
-  const extractTime = (rawText: string) => {
+  const extractTime = async (rawText: string) => {
     const text = cleanText(rawText);
-    const match = text.match(
-      /\*\*Start Time:\*\*\s*(.*?)\s*\n+\*\*End Time:\*\*\s*(.*?)\s*\n+\*\*Courses:\*\*\s*(.*)/i
-    );
+    //Regex to basically extract Day, Course, Start Time for Studying and End Time from AI text
+    const matches = [...text.matchAll(
+      /\*\*Day:\*\*\s*(.*?)\s*\n+\s*\*\*Start Time:\*\*\s*(.*?)\s*\n+\s*\*\*End Time:\*\*\s*(.*?)\s*\n+\s*\*\*Courses:\*\*\s*(.*?)(?=\n{2,}|\Z)/gi
+   )];
 
-    if (match) {
-      console.log("✅ Start:", match[1].trim());
-      console.log("✅ End:", match[2].trim());
-      console.log("✅ Courses:", match[3].trim());
+    if (matches.length > 0) {
+      const updates: Record<Weekday, { Day:string; Course: string; Start: string; End: string }[]> = {
+        Sunday: [], Monday: [], Tuesday: [], Wednesday: [],
+        Thursday: [], Friday: [], Saturday: [],
+      };
+      matches.forEach(match => {
+        const day = match[1].trim() as Weekday;
+        const start = match[2].trim();
+        const end = match[3].trim();
+        const course = match[4].trim();
+
+        updates[day].push({ Day:day, Course: course, Start: start, End: end });
+      });
+
+        await supabase
+        .from("student_courses")
+        .update({ schedule: updates })
+        .eq("chat_id", chatId)
+    console.log("✅ Stored all time blocks:", updates);
+
+        const { data: table, error } = await supabase
+        .from("student_courses")
+        .select("Courses, Priority_Grouped, schedule")
+        .eq("chat_id", chatId)
+
+        if (table) {
+          setTimeTable(table);
+          console.log("DONE!!!",timeTable)
+
+        }
     } else {
       console.log("❌ No time block found.");
     }
+
   };
 
   console.log(messageList)
+  console.log("Table",timeTable)
 
   return (
     <div className="mt-8 p-4 border-2 border-dashed rounded-lg bg-blue-50 max-w-2xl mx-auto font-sans">
@@ -166,6 +207,25 @@ export default function AIChatComponent({ coursesForDay, day }: AIChatProps) {
           {isLoading ? "Sending..." : "Send"}
         </button>
       </form>
+      {/* TimeTable */}
+        {/* <div>
+          {timeTable?.map((tab)=>(  
+            <div>
+              {tab.schedule.map((tb, idx) => (
+                <div key={idx} className="mb-2">
+                  <p className="font-bold">{tb.Day}</p>
+                  <div className="flex gap-2 ml-4">
+                    <p>{tb.Course}</p>
+                    <p>{tb.Start} - {tb.End}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div> */}
     </div>
   );
 }
+
+
+//I have classes from 8am to 3pm, football practice from 4pm to 6pm, dinner by 7pm and bedtime by 11pm. Which time is best for reading in the evening

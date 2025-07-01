@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AIChatComponent from "./AIComponent";
+import { supabase } from "@/supabaseClient";
 
-type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
 
 interface Course {
     name: string;
@@ -27,15 +28,15 @@ export default function Logic() {
         endTime:''
     });
 
+    const [chatId, setChatId] = useState<string>("");
     const [coursesToSchedule, setCoursesToSchedule] = useState<Course[]>([]);
     const [dayToSchedule, setDayToSchedule] = useState<string>("");
-
     const [schedule, setSchedule] = useState<Course[]>([]);
     const [priorityGrouped, setPriorityGrouped] = useState<Record<Weekday, Course[]>>({
-        Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: [],
+        Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [],
     });
     const [grouped, setGrouped] = useState<Record<Weekday, Course[]>>({
-        Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: [],
+        Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [],
     });
 
 
@@ -44,11 +45,11 @@ export default function Logic() {
         const priorityOrder = ["hard", "both-hard-bulky", "hard-to-grasp", "mid", "bulky", "easy"];
 
         const newGrouped: Record<Weekday, Course[]> = {
-            Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: [],
+            Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: []
         };
 
         const unsortedGrouped: Record<Weekday, Course[]> = {
-            Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: [],
+            Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: []
         };
 
         schedule.forEach((item) => {
@@ -96,8 +97,16 @@ export default function Logic() {
     }
 
     // --- Function to Start AI Conversation ---
-    function handleScheduleDay(coursesForDay: Course[], day: string) {
+    async function handleScheduleDay(coursesForDay: Course[], day: string) {
         console.log(`Starting AI conversation for ${day} with:`, coursesForDay);
+            const { data: session, error } = await supabase.from("student_courses").insert({
+                Courses:grouped,
+                Priority_Grouped:priorityGrouped,
+            })
+        .select()
+        .single();
+
+        setChatId(session.chat_id);
         setCoursesToSchedule(coursesForDay);
         setDayToSchedule(day);
     }
@@ -126,7 +135,7 @@ export default function Logic() {
                         onChange={(e) => setForm({ ...form, day: e.target.value as Weekday })}
                         className="w-full p-2 border rounded-md bg-white"
                     >
-                        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(day => (
                             <option key={day} value={day}>{day}</option>
                         ))}
                     </select>
@@ -204,7 +213,7 @@ export default function Logic() {
                                     Schedule This Day
                                 </Button>
                             {coursesToSchedule.length > 0 && (
-                                <AIChatComponent coursesForDay={priorityGrouped[day as Weekday]} day ={day} />
+                                <AIChatComponent coursesForDay={priorityGrouped[day as Weekday]} day ={day} chatId={chatId} />
                             )}
                             </div>
                         )
@@ -213,3 +222,8 @@ export default function Logic() {
         </div>
     );
 }
+
+
+//LOGIN -> INPUT COURSES -> SCHEDULE WEEK -> INITIATE CHAT SESSIONS -> DISCUSS AND GET TIME FROM AI -> GENERATE TIMETABLE
+//                                          {Chat id will be used }                                  {Each generated TimeTable will belong to a chat session}
+//
