@@ -32,11 +32,12 @@ interface Extract{
 interface Table{
   Courses:Course[];
   Priority_Grouped:Course[];
-  schedule: Extract[];
+  schedule:  Record<Weekday, Extract[]>;
 }
 
 export default function AIChatComponent({ coursesForDay, day, chatId }: AIChatProps) {
   const [input, setInput] = useState<string>("");
+  const [sessionId,setSessionId] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [messageList, setMessageList] = useState<messages[]>([]);
   const [timeTable,setTimeTable] = useState<Table[]>([]);
@@ -55,10 +56,14 @@ export default function AIChatComponent({ coursesForDay, day, chatId }: AIChatPr
   }, [chatId]);
 
   const createSession= async () => {
-      await supabase
+      const { data: session, error } = await supabase
         .from("chat_sessions")
-        .insert({id: chatId, title: `Chat for ${day}` })
-
+        .insert({user_id: chatId, title: `Chat for ${day}` })
+        .select()
+        .single();
+      if(session){
+        setSessionId(session.id);
+      }
       // if(session.id){
       //   const { data: oldMessages } = await supabase
       //     .from("chat_messages")
@@ -94,7 +99,7 @@ export default function AIChatComponent({ coursesForDay, day, chatId }: AIChatPr
 
     // 1. Save user message to Supabase
     await supabase.from("chat_messages").insert({
-      chat_id: chatId,
+      chat_id: sessionId,
       role: "user",
       content: input,
     });
@@ -115,15 +120,17 @@ export default function AIChatComponent({ coursesForDay, day, chatId }: AIChatPr
     const json = await result.json();
 
     // 3. Save AI response to Supabase
-    await supabase.from("chat_messages").insert({
-      chat_id: chatId,
-      role: "assistant",
-      content: json.content,
-    });
-
-    // 4. Update UI
-    setMessageList((prev) => [...prev, json]);
-    setIsLoading(false);
+    if(sessionId){
+      await supabase.from("chat_messages").insert({
+        chat_id: sessionId,
+        role: "assistant",
+        content: json.content,
+      });
+  
+      // 4. Update UI
+      setMessageList((prev) => [...prev, json]);
+      setIsLoading(false);
+    }
   };
 
   //EXTRACTION PHASSEEEE!!!!
@@ -208,21 +215,34 @@ export default function AIChatComponent({ coursesForDay, day, chatId }: AIChatPr
         </button>
       </form>
       {/* TimeTable */}
-        {/* <div>
-          {timeTable?.map((tab)=>(  
-            <div>
-              {tab.schedule.map((tb, idx) => (
-                <div key={idx} className="mb-2">
-                  <p className="font-bold">{tb.Day}</p>
-                  <div className="flex gap-2 ml-4">
-                    <p>{tb.Course}</p>
-                    <p>{tb.Start} - {tb.End}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div> */}
+      {timeTable.length > 0 ? (
+        timeTable.map((tableEntry, index) => (
+        // In your case, it seems like timeTable will often have just one entry
+        // but mapping is safer if it could ever contain multiple schedule tables
+          <div key={index} className="schedule-table-entry">
+            {/* Display schedule for each day */}
+            {Object.entries(tableEntry.schedule).map(([day, dailyEntries]) => (
+            <div key={day} className="day-schedule-card">
+              <h2>{day}</h2>
+                {dailyEntries.length > 0 ? (
+                  <ul>
+                    {dailyEntries.map((item, itemIndex) => (
+                      <li key={itemIndex}>
+                        <strong>{item.Course}</strong>
+                        <p>Time: {item.Start} - {item.End}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No scheduled activities for {day}.</p>
+              )}
+          </div>
+        ))}
+      </div>
+      ))
+    ) : (
+      <p>Loading schedule or no schedule available...</p>
+    )}
     </div>
   );
 }

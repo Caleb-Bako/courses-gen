@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AIChatComponent from "./AIComponent";
 import { supabase } from "@/supabaseClient";
+import { useAuth } from "@clerk/nextjs";
 
 type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
 
@@ -18,6 +19,7 @@ interface Course {
 }
 
 export default function Logic() {
+    const { userId } =useAuth()
     const [form, setForm] = useState<Course>({
         name: '',
         day: 'Monday',
@@ -100,16 +102,20 @@ export default function Logic() {
     async function handleScheduleDay(coursesForDay: Course[], day: string) {
         console.log(`Starting AI conversation for ${day} with:`, coursesForDay);
             const { data: session, error } = await supabase.from("student_courses").insert({
+                chat_id:userId,
                 Courses:grouped,
                 Priority_Grouped:priorityGrouped,
             })
         .select()
         .single();
-
-        setChatId(session.chat_id);
+        if(session){
+            setChatId(session.chat_id);
+        }
         setCoursesToSchedule(coursesForDay);
         setDayToSchedule(day);
     }
+
+    console.log("Welcome:", userId)
 
     return (
         <div className="p-6 max-w-2xl mx-auto font-sans bg-gray-50 rounded-lg shadow-md">
