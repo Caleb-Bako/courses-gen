@@ -9,6 +9,9 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { z } from 'zod';
 import { Input } from "@/components/ui/input"
+import { supabase } from "@/supabaseClient"
+import { useAuth } from "@clerk/nextjs"
+import { useRouter } from 'next/navigation';
 
 const courseSchema = z.object({
   name: z.string().min(1, "Course name is required"),
@@ -33,10 +36,11 @@ type Course = z.infer<typeof courseSchema>;
 
 
 export default function TimetableGeneratorPage() {
+  const { userId } =useAuth()  
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [schedule, setSchedule] = useState<Course[]>([]);
-  const [coursesToSchedule, setCoursesToSchedule] = useState<Course[]>([]);
-  const [dayToSchedule, setDayToSchedule] = useState<string>("");
+  const [chatId, setChatId] = useState<string>("");
 
   const [form, setForm] = useState<Course>({
     name: '',
@@ -102,6 +106,10 @@ export default function TimetableGeneratorPage() {
         }
         setForm({ ...form, category, intensity: defaultIntensity });
     }
+    function handleIntensityChange(value: Course['intensity']) {
+        setForm({ ...form, intensity: value });
+    }
+    
     function handleAdd() {
         setSchedule([...schedule, form]);
         setForm({
@@ -113,6 +121,26 @@ export default function TimetableGeneratorPage() {
             startTime:'',
             endTime:''
         });
+    }
+
+    async function handleScheduleDay() {
+        console.log(`Starting AI conversation for Student with:`);
+        const { data: session, error } = await supabase.from("student_courses").insert({
+            chat_id:userId,
+            Courses:grouped,
+            Priority_Grouped:priorityGrouped,
+            })
+            .select()
+            .single();
+            if(session){
+                setChatId(session.chat_id);
+                const chatData = {
+                    priorityGrouped,
+                    chatId:session.chat_id,
+                };
+                localStorage.setItem('ai-chat-data', JSON.stringify(chatData));
+                router.push('/chat');
+            }
     }
 
   return (
@@ -212,7 +240,7 @@ export default function TimetableGeneratorPage() {
               <CardContent>
                 <div className="flex justify-between gap-4">
                     <div className="space-y-4 w-full">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 w-full">
                             <Input
                                 placeholder="Course Name e.g MTH"
                                 value={form.name}
@@ -225,6 +253,8 @@ export default function TimetableGeneratorPage() {
                                 onChange={(e) => setForm({ ...form, time: e.target.value })}
                                 className="w-full"
                             />
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 w-full">
                             <select
                                 value={form.day}
                                 onChange={(e) => setForm({ ...form, day: e.target.value as Weekday })}
@@ -242,6 +272,21 @@ export default function TimetableGeneratorPage() {
                                 {['calculation', 'coding', 'theory'].map((category) => (
                                     <option key={category} value={category}>{category}</option>
                                 ))}
+                            </select>
+                            <select 
+                                value={form.intensity}
+                                onChange={(e) => handleIntensityChange(e.target.value as Course['intensity'])}
+                                className="w-full p-2 border rounded-md bg-white"
+                            >
+                                {form.category === 'calculation' || form.category === 'coding' ? (
+                                    ['hard', 'mid', 'easy'].map((condition) => (
+                                        <option key={condition} value={condition}>{condition}</option>
+                                    ))
+                                ) : (
+                                    ['hard-to-grasp', 'bulky', 'easy', 'both-hard-bulky'].map((condition) => (
+                                        <option key={condition} value={condition}>{condition}</option>
+                                    ))
+                                )}
                             </select>
                         </div>
                         <div className="flex justify-between">
@@ -345,12 +390,10 @@ export default function TimetableGeneratorPage() {
                       </div>
                     </div>
                   </div>
-                  <Link href="/timetable-generator/chat">
-                    <Button size="lg">
+                    <Button size="lg" onClick={handleScheduleDay}>
                       Start AI Chat
                       <MessageSquare className="ml-2 h-4 w-4" />
                     </Button>
-                  </Link>
                 </div>
               </CardContent>
             </Card>

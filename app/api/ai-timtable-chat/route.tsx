@@ -1,47 +1,29 @@
-import { inngest } from "@/inngest/client";
+// app/api/ai-timtable-chat/route.ts
 import { NextResponse } from "next/server";
+import { inngest } from "@/inngest/client";
 
-export async function POST(req:any) {
-    const {userInput} = await req.json();
+export async function POST(req: Request) {
+  try {
+    const { userInput } = await req.json();
 
-    const resultId = await inngest.send({
-        name:'AiTableAgent',
-        data:{
-            userInput:userInput
-        }
+    if (!userInput) {
+      return NextResponse.json({ error: "Missing user input" }, { status: 400 });
+    }
+
+    const result = await inngest.send({
+      name: "AiTableAgent",
+      data: { userInput },
     });
-    const runID = resultId?.ids[0];
-     let runStatus: any; 
-    while (true) {
-        runStatus = await getRun(runID);
-        if (
-            runStatus &&
-            Array.isArray(runStatus.data) &&
-            runStatus.data.length > 0
-        ) {
-            if (runStatus.data[0]?.status === 'Completed') {
-                break;
-            }
-        } else {
-            console.warn("Inngest API response 'data' is not an array or is empty:");
-        }
 
-        await new Promise(resolve => setTimeout(resolve, 500));
+    const runId = result?.ids?.[0];
+
+    if (!runId) {
+      return NextResponse.json({ error: "Failed to get run ID" }, { status: 500 });
     }
 
-    if (runStatus && runStatus.data && runStatus.data.length > 0) {
-        return NextResponse.json(runStatus.data?.[0].output?.output[0]);
-    } else {
-        return NextResponse.json({ error: "No completed run data found or response malformed" }, { status: 500 });
-    }
-}
-
-export async function getRun(runId:string) {
-    const result = await fetch(`${process.env.INNGEST_SERVER_HOST}/v1/events/${runId}/runs`, {
-                headers: {
-                    Authorization: `Bearer ${process.env.INNGEST_SIGNING_KEY}`,
-                },  
-            })
-    const json = await result.json(); 
-    return json;      
+    return NextResponse.json({ runId });
+  } catch (err) {
+    console.error("Error in ai-timtable-chat:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }
