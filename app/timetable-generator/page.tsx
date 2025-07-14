@@ -3,7 +3,16 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogFooter,
+  DialogClose,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
+} from "@/components/ui/dialog";
 import { Calendar, ArrowLeft, ArrowRight, CheckCircle2, MessageSquare, PlusCircle } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -40,7 +49,8 @@ export default function TimetableGeneratorPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [schedule, setSchedule] = useState<Course[]>([]);
-  const [chatId, setChatId] = useState<string>("");
+  const [storedID, setStored] = useState<string>("")
+  const [open, setOpen] = useState(false);
 
   const [form, setForm] = useState<Course>({
     name: '',
@@ -64,12 +74,6 @@ export default function TimetableGeneratorPage() {
     { id: 3, title: "Generate Timetable", description: "Create your optimized schedule", completed: false },
   ]
 
-  const courses = [
-    { name: "Advanced Mathematics", code: "MTH 301", units: 3, intensity: "Hard", category: "Calculation" },
-    { name: "Computer Programming", code: "CSC 201", units: 3, intensity: "Medium", category: "Theory" },
-    { name: "Physics Laboratory", code: "PHY 202", units: 2, intensity: "Easy", category: "Practical" },
-    { name: "Statistics", code: "STA 301", units: 2, intensity: "Medium", category: "Calculation" },
-  ]
 // --- Logic for Sorting and Grouping ---
     useEffect(() => {
         const priorityOrder = ["hard", "both-hard-bulky", "hard-to-grasp", "mid", "bulky", "easy"];
@@ -99,6 +103,15 @@ export default function TimetableGeneratorPage() {
         setPriorityGrouped(newGrouped);
     }, [schedule]);
 
+    useEffect(()=>{
+       const saved = localStorage.getItem('session');
+       if(saved){
+        const { chatId,sessionId } = JSON.parse(saved);
+        console.log("ID Gotten:",chatId,sessionId)
+        setStored(sessionId);
+       }
+    },[])
+
     function handleCategoryChange(category: Course['category']) {
         let defaultIntensity: Course['intensity'] = 'mid';
         if (category === 'theory') {
@@ -123,25 +136,50 @@ export default function TimetableGeneratorPage() {
         });
     }
 
-    async function handleScheduleDay() {
-        console.log(`Starting AI conversation for Student with:`);
-        const { data: session, error } = await supabase.from("student_courses").insert({
-            chat_id:userId,
-            Courses:grouped,
-            Priority_Grouped:priorityGrouped,
-            })
-            .select()
-            .single();
-            if(session){
-                setChatId(session.chat_id);
-                const chatData = {
-                    priorityGrouped,
-                    chatId:session.chat_id,
-                };
-                localStorage.setItem('ai-chat-data', JSON.stringify(chatData));
-                router.push('/chat');
-            }
+    const resume = () => {
+      if (storedID){
+        setOpen(true);
+      }else{
+         handleScheduleDay("New")
+      }
     }
+
+    const newChat = () => {
+        const emptyValue = "New"; // Define the new value
+        setStored(emptyValue);
+        setOpen(false);
+        handleScheduleDay(emptyValue)
+      console.log("Info",storedID)
+    }
+
+    async function handleScheduleDay(response:string) {
+        console.log(`Starting AI conversation for Student with:`);
+        if(storedID === response){
+          const chatData = {
+            user:userId,
+            storedID,
+            };
+            localStorage.setItem('ai-chat-data', JSON.stringify(chatData));
+            router.push('/chat');
+        }else{
+          const { data: session, error } = await supabase.from("student_courses").insert({
+              chat_id:userId,
+              Courses:grouped,
+              Priority_Grouped:priorityGrouped,
+              })
+              .select()
+              .single();
+              if(session){
+                  const chatData = {
+                      priorityGrouped,
+                      chatId:session.chat_id,
+                      id:session.id
+                  };
+                  localStorage.setItem('ai-chat-data', JSON.stringify(chatData));
+                  router.push('/chat');
+              }
+      }
+        }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -162,6 +200,44 @@ export default function TimetableGeneratorPage() {
           </div>
         </div>
       </header>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <span></span>
+      </DialogTrigger>
+
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Continue Previous Chat?</DialogTitle>
+          <DialogDescription>
+            It looks like you have an ongoing conversation. What would you like to do?
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="py-4 text-center">
+          <h2 className="text-lg font-semibold mb-2">You have already started a chat.</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Do you want to continue it or start a new one?</p>
+        </div>
+
+        <DialogFooter className="flex items-center justify-between gap-2 py-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={newChat}
+          >
+            Start New
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              handleScheduleDay(storedID);
+            }}
+          >
+            Continue Chat
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
       <div className="container mx-auto px-4 py-8">
         {/* Progress Steps */}
@@ -234,7 +310,7 @@ export default function TimetableGeneratorPage() {
                     </div>
                 </CardTitle>
                 <CardDescription>
-                  You have added 4 courses with their intensity levels and categories. Review them below.
+                  Add courses with their intensity levels and categories. Review them below.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -390,7 +466,7 @@ export default function TimetableGeneratorPage() {
                       </div>
                     </div>
                   </div>
-                    <Button size="lg" onClick={handleScheduleDay}>
+                    <Button size="lg" onClick={resume}>
                       Start AI Chat
                       <MessageSquare className="ml-2 h-4 w-4" />
                     </Button>

@@ -9,6 +9,9 @@ import { ArrowLeft, Send, Bot, User, Calendar, Clock, BookOpen } from "lucide-re
 import Link from "next/link"
 import { FormEvent, useEffect, useState } from "react"
 import { supabase } from "@/supabaseClient"
+import Markdown from "react-markdown"
+import { useAuth } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
 
 type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 type messages = {
@@ -27,31 +30,67 @@ interface Course {
 }
 
 export default function TimetableChatPage() {
+  const { userId } =useAuth()  
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [input, setInput] = useState<string>("");
   const [messageList, setMessageList] = useState<messages[]>([]);
   const [sessionId,setSessionId] = useState<string>("");
   const [chatId, setChatId] = useState<string>("");
+  const [tableId,setTableId] = useState<string>("");
   const [priorityGrouped, setPriorityGrouped] = useState<Record<Weekday, Course[]>>({
     Sunday:[],Monday: [],Tuesday: [],Wednesday: [],Thursday: [],Friday: [],Saturday:[] });
-
+  
   useEffect(() => {
     const init = async () => {
         const saved = localStorage.getItem('ai-chat-data');
         if (saved) {
-            const { priorityGrouped, chatId } = JSON.parse(saved);
-            // Set them
-            setPriorityGrouped(priorityGrouped);
-            setChatId(chatId);
-            if (chatId) {
-                createSession(chatId);
+            const { priorityGrouped, chatId,storedID ,user,id} = JSON.parse(saved);
+            if(storedID && user === userId ){
+              setSessionId(storedID)
+              setChatId(user)
+              const { data: oldMessages } = await supabase
+                .from("chat_messages")
+                .select("role, content")
+                .eq("chat_id", storedID)
+                .order("created_at", { ascending: true });
+                console.log("Message found");
+              setMessageList(
+                (oldMessages || []).map((msg) => ({
+                    ...msg,
+                    type: "text",
+                }))
+                );
+                console.log(messageList);
+            }else {
+              setPriorityGrouped(priorityGrouped);
+              setChatId(chatId);
+              setTableId(id);
+              if (chatId) {
+                  createSession(chatId); 
+              }
+              console.log("new")
             }
-         console.log("Saved",saved)   
+            console.log("Saved",saved)  
+             localStorage.removeItem('ai-chat-data');
     }
     };
 
     init();
   }, []);
+
+useEffect(() => {
+  if(messageList.length > 0){
+     const chatData = {
+      sessionId,
+      chatId
+     }
+     console.log("User pressed the back button!", chatData);
+    localStorage.setItem('session', JSON.stringify(chatData));
+  }else{
+     localStorage.removeItem('session');
+  }
+}, [messageList])
 
    const createSession= async (id:string) => {
       const { data: session, error } = await supabase
@@ -139,6 +178,60 @@ const pollRunStatus = async (runId: string) => {
   console.warn("🕒 AI response polling timed out.");
 };
 
+const extracText = () => {
+   if (messageList.length === 0) return;
+   const last = messageList[messageList.length - 1];
+    if (last.role !== "user") extractTime(last.content);
+}
+
+//EXTRACTION PHASSEEEE!!!!
+  const cleanText = (text: string) =>
+    text
+      .replace(/\r\n|\r/g, "\n")           // Normalize all line endings
+      .replace(/\n{2,}/g, "\n\n")          // Collapse multiple blank lines into one paragraph break
+      .replace(/[ \t]{2,}/g, " ")          // Collapse extra spaces/tabs
+      .trim();
+
+  const extractTime = async (rawText: string) => {
+    const text = cleanText(rawText);
+    //Regex to basically extract Day, Course, Start Time for Studying and End Time from AI text
+    const matches = [...text.matchAll(
+      /\*\*Day:\*\*\s*(.*?)\s*\n+\s*\*\*Start Time:\*\*\s*(.*?)\s*\n+\s*\*\*End Time:\*\*\s*(.*?)\s*\n+\s*\*\*Courses:\*\*\s*(.*?)(?=\n{2,}|\Z)/gi
+   )];
+
+    if (matches.length > 0) {
+      const updates: Record<Weekday, { Day:string; Course: string; Start: string; End: string }[]> = {
+        Sunday: [], Monday: [], Tuesday: [], Wednesday: [],
+        Thursday: [], Friday: [], Saturday: [],
+      };
+      matches.forEach(match => {
+        const day = match[1].trim() as Weekday;
+        const start = match[2].trim();
+        const end = match[3].trim();
+        const course = match[4].trim();
+
+        updates[day].push({ Day:day, Course: course, Start: start, End: end });
+      });
+
+      await supabase
+        .from("student_courses")
+        .update({ schedule: updates })
+        .eq("id", tableId)
+        console.log("✅ Stored all time blocks:", updates);
+        const chatData = {
+            tableId
+          }
+          localStorage.setItem('Table', JSON.stringify(chatData));
+          router.push('/timetable-generator/result');
+
+        
+    } else {
+      console.log("❌ No time block found.");
+    }
+
+  };
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -200,17 +293,6 @@ const pollRunStatus = async (runId: string) => {
                     </div>
                   </div>
                 ))}
-
-                {/* <div className="pt-4 border-t">
-                  <h4 className="font-medium text-sm mb-2">Quick Actions</h4>
-                  <div className="space-y-2">
-                    {quickActions.map((action, index) => (
-                      <Button key={index} variant="outline" size="sm" className="w-full text-xs h-8 bg-transparent">
-                        {action}
-                      </Button>
-                    ))}
-                  </div>
-                </div> */}
               </CardContent>
             </Card>
           </div>
@@ -252,7 +334,7 @@ const pollRunStatus = async (runId: string) => {
                               message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900"
                             }`}
                           >
-                            <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</div>
+                            <div className="whitespace-pre-wrap text-sm leading-relaxed"> <Markdown>{message.content}</Markdown></div>
                             <div
                               className={`text-xs mt-2 ${message.role === "user" ? "text-blue-100" : "text-gray-500"}`}
                             >
@@ -267,7 +349,7 @@ const pollRunStatus = async (runId: string) => {
               </CardContent>
 
               {/* Message Input */}
-              <form onSubmit={handleSubmit} className="bg-white border-t p-4 absolute inset-x-0 bottom-0">
+              <form onSubmit={handleSubmit} className="bg-white border-t p-4 absolute inset-x-0 bottom-15">
                 <div className="flex space-x-2 mb-3">
                   <Input
                     placeholder="Ask about your study schedule..."
@@ -292,11 +374,15 @@ const pollRunStatus = async (runId: string) => {
                       Weekend Schedule
                     </Button>
                   </div>
-                  <Link href="/timetable-generator/result">
-                    <Button className="bg-green-600 hover:bg-green-700">Generate Timetable</Button>
-                  </Link>
+                  {/* <Link href="/timetable-generator/result"> */}
+                  {/* </Link> */}
                 </div>
               </form>
+               <Button
+                  className="bg-green-600 hover:bg-green-700" onClick={extracText}
+                >
+                  Generate Timetable
+                </Button>
             </Card>
           </div>
         </div>
@@ -304,3 +390,10 @@ const pollRunStatus = async (runId: string) => {
     </div>
   )
 }
+
+//Generate id to link chat + courses + timetable
+// Make way that if something is in input and want to go back you will be prompted with an alert 
+//Add table to chat flow in chat_message db
+//Soln: Send session id through local storage if going back 
+//Make AI CHAT Component not link so use steps state or something
+//Add clickable only when time is extracted
