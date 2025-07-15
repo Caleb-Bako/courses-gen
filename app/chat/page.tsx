@@ -210,7 +210,9 @@ const extracText = () => {
         const end = match[3].trim();
         const course = match[4].trim();
 
-        updates[day].push({ Day:day, Course: course, Start: start, End: end });
+        const cleanedCourse = course.replace(/\s*\(.*?\)\s*/g, '').trim();
+
+        updates[day].push({ Day:day, Course: cleanedCourse, Start: start, End: end });
       });
 
       await supabase
