@@ -11,7 +11,7 @@ import { FormEvent, useEffect, useState } from "react"
 import { supabase } from "@/supabaseClient"
 import Markdown from "react-markdown"
 import { useAuth } from "@clerk/nextjs"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 
 type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 type messages = {
@@ -28,9 +28,13 @@ interface Course {
     startTime?: string;
     endTime?: string;
 }
+interface History{
+  title:string
+}
 
 export default function TimetableChatPage() {
-  const { userId } =useAuth()  
+  const { userId } = useAuth();
+  const params = useParams<{ session: string;}>() 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [input, setInput] = useState<string>("");
@@ -38,52 +42,95 @@ export default function TimetableChatPage() {
   const [sessionId,setSessionId] = useState<string>("");
   const [chatId, setChatId] = useState<string>("");
   const [tableId,setTableId] = useState<string>("");
+  const [grouped, setGrouped] = useState<Record<Weekday, Course[]>>({
+    Sunday:[],Monday: [],Tuesday: [],Wednesday: [],Thursday: [],Friday: [],Saturday:[]
+    }); 
   const [priorityGrouped, setPriorityGrouped] = useState<Record<Weekday, Course[]>>({
     Sunday:[],Monday: [],Tuesday: [],Wednesday: [],Thursday: [],Friday: [],Saturday:[] });
+  const [chatHistory,setChatHistory] = useState<History[]>([]);  
   
   useEffect(() => {
     const init = async () => {
-        const saved = localStorage.getItem('ai-chat-data');
-        if (saved) {
-            const { priorityGrouped, chatId,storedID ,user,id} = JSON.parse(saved);
-            if(storedID && user === userId ){
-              setSessionId(storedID)
-              setChatId(user)
-              const { data: oldMessages } = await supabase
-                .from("chat_messages")
-                .select("role, content")
-                .eq("chat_id", storedID)
-                .order("created_at", { ascending: true });
-                console.log("Message found");
-              setMessageList(
-                (oldMessages || []).map((msg) => ({
-                    ...msg,
-                    type: "text",
-                }))
-                );
-                console.log(messageList);
-            }else {
-              setPriorityGrouped(priorityGrouped);
-              setChatId(chatId);
-              setTableId(id);
-              if (chatId) {
-                  createSession(chatId); 
+      const saved = localStorage.getItem('ai-chat-data');
+      setSessionId(params.session);
+      retrieveChatHistory(userId);
+        //if params(session.id) exist then retrieve old messsages 
+        const { data: oldMessages } = await supabase
+          .from("chat_messages")
+          .select("role, content")
+          .eq("chat_id", params.session)
+          .order("created_at", { ascending: true });
+             console.log("Message gotten",oldMessages)  
+            if(oldMessages){
+              console.log("Message found");
+                setMessageList(
+                  (oldMessages || []).map((msg) => ({
+                      ...msg,
+                      type: "text",
+                  }))
+                )
+            }else{
+              if(saved){
+                const { priorityGrouped,grouped} = JSON.parse(saved);
+                const { data: session, error } = await supabase.from("student_courses").insert({
+                  chat_id:userId,
+                  Courses:grouped,
+                  Priority_Grouped:priorityGrouped,
+                  })
+                  .select()
+                  .single();
+                  console.log("DONE",session)
+                  setTableId(session?.id);
               }
-              console.log("new")
+              setPriorityGrouped(priorityGrouped);
+              setGrouped(grouped);
             }
-            console.log("Saved",saved)  
-             localStorage.removeItem('ai-chat-data');
-    }
+        // if (saved) {
+        //   const { priorityGrouped,user,id} = JSON.parse(saved);
+        //       setPriorityGrouped(priorityGrouped);
+        //       setChatId(user);
+        // }
+        localStorage.removeItem('ai-chat-data');
+        // if (saved) {
+        //     const { priorityGrouped, chatId,storedID ,user,id} = JSON.parse(saved);
+        //      retrieveChatHistory(userId);
+        //     if( userId ){
+        //       // setSessionId(storedID)
+        //       // setChatId(user)
+        //       // const { data: oldMessages } = await supabase
+        //       //   .from("chat_messages")
+        //       //   .select("role, content")
+        //       //   .eq("chat_id", storedID)
+        //       //   .order("created_at", { ascending: true });
+        //       //   console.log("Message found");
+        //       // setMessageList(
+        //       //   (oldMessages || []).map((msg) => ({
+        //       //       ...msg,
+        //       //       type: "text",
+        //       //   }))
+        //       //   );
+        //       //   console.log(messageList);
+        //     }else {
+        //       setPriorityGrouped(priorityGrouped);
+        //       setChatId(user);
+        //       setTableId(id);
+        //       console.log("new")
+        //     }
+        //     console.log("Saved",saved)  
+        //      localStorage.removeItem('ai-chat-data');
+    // }
     };
 
     init();
   }, []);
 
+  console.log("Message",messageList)
+
 useEffect(() => {
   if(messageList.length > 0){
      const chatData = {
       sessionId,
-      chatId
+      userId
      }
      console.log("User pressed the back button!", chatData);
     localStorage.setItem('session', JSON.stringify(chatData));
@@ -92,22 +139,33 @@ useEffect(() => {
   }
 }, [messageList])
 
-   const createSession= async (id:string) => {
-      const { data: session, error } = await supabase
+  //  const createSession= async (id:string) => {
+  //     const { data: session, error } = await supabase
+  //       .from("chat_sessions")
+  //       .insert({user_id:id, title: `Chat for ` })
+  //       .select()
+  //       .single();
+  //     if(session){
+  //       setSessionId(session.id);
+  //     }
+  //   console.log("Session Created");
+  // }
+
+  const retrieveChatHistory = async(id:string | null | undefined)=> {
+      const { data: history, error } = await supabase
         .from("chat_sessions")
-        .insert({user_id:id, title: `Chat for ` })
-        .select()
-        .single();
-      if(session){
-        setSessionId(session.id);
-      }
-    console.log("Session Created");
+        .select("title")
+        .eq("user_id", id)
+        if(history){
+          setChatHistory(history);
+        }
+        console.log("History",chatHistory, "User", id)
   }
 
     const handleSubmit = async (e: FormEvent) => {
-    console.log("Clicked")
+    console.log("Clicked",chatId)
       e.preventDefault();
-      if (!chatId) return;
+      // if (!chatId) return;
   
       const userMsg = { content: input, role: "user", type: "text" };
       setMessageList((prev) => [...prev, userMsg]);
@@ -122,7 +180,7 @@ useEffect(() => {
       });
   
       // 2. Send to backend AI API
-      const result = await fetch("api/ai-timtable-chat", {
+      const result = await fetch("../api/ai-timtable-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -148,7 +206,7 @@ const pollRunStatus = async (runId: string) => {
   const maxAttempts = 220;
 
   while (attempts < maxAttempts) {
-    const res = await fetch(`/api/check-run-status?runId=${runId}`);
+    const res = await fetch(`../api/check-run-status?runId=${runId}`);
     const data = await res.json();
 
     if (data.status === "Completed") {
@@ -246,10 +304,10 @@ const extracText = () => {
                 Back to Generator
               </Button>
             </Link>
-            <div className="flex items-center space-x-2">
+            {/* <div className="flex items-center space-x-2">
               <Bot className="h-6 w-6 text-blue-600" />
               <span className="text-xl font-bold text-gray-900">AI Study Planner</span>
-            </div>
+            </div> */}
           </div>
           <Badge variant="secondary">Step 2 of 3</Badge>
         </div>
@@ -267,33 +325,10 @@ const extracText = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {[
-                  { name: "Advanced Mathematics", code: "MTH 301", intensity: "Hard", category: "Calculation" },
-                  { name: "Computer Programming", code: "CSC 201", intensity: "Medium", category: "Theory" },
-                  { name: "Physics Laboratory", code: "PHY 202", intensity: "Easy", category: "Practical" },
-                  { name: "Statistics", code: "STA 301", intensity: "Medium", category: "Calculation" },
-                ].map((course, index) => (
-                  <div key={index} className="p-3 border rounded-lg bg-white">
-                    <h4 className="font-medium text-sm">{course.name}</h4>
-                    <p className="text-xs text-gray-600 mb-2">{course.code}</p>
-                    <div className="flex space-x-1">
-                      <Badge
-                       
-                        variant={
-                          course.intensity === "Hard"
-                            ? "destructive"
-                            : course.intensity === "Medium"
-                              ? "default"
-                              : "secondary"
-                        }
-                      >
-                        {course.intensity}
-                      </Badge>
-                      <Badge  variant="outline">
-                        {course.category}
-                      </Badge>
-                    </div>
-                  </div>
+                {chatHistory.map((chat,index)=>(
+                   <div key={index} className="p-3 border rounded-lg bg-white">
+                      <h4 className="font-medium text-sm">{chat.title}</h4>
+                   </div>
                 ))}
               </CardContent>
             </Card>
@@ -399,3 +434,8 @@ const extracText = () => {
 //Soln: Send session id through local storage if going back 
 //Make AI CHAT Component not link so use steps state or something
 //Add clickable only when time is extracted
+//from input felds --> [session.id] dynamic route --> chat 
+//if prarams exist 
+//Look and logic so that duration for each study can be allocated
+// Remove AI or use Hugging Face --> Sort using my logic arrange drag and drop(maybe)
+//Add waitlist after generating timetable

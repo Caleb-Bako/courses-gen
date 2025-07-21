@@ -160,24 +160,21 @@ export default function TimetableGeneratorPage() {
             storedID,
             };
             localStorage.setItem('ai-chat-data', JSON.stringify(chatData));
-            router.push('/chat');
+            router.push(`/chat/${storedID}`);
         }else{
-          const { data: session, error } = await supabase.from("student_courses").insert({
-              chat_id:userId,
-              Courses:grouped,
-              Priority_Grouped:priorityGrouped,
-              })
-              .select()
-              .single();
-              if(session){
+              const { data: sess, error } = await supabase
+                .from("chat_sessions")
+                .insert({user_id:userId, title: `Chat for ` })
+                .select()
+                .single();
+                if(sess){
                   const chatData = {
                       priorityGrouped,
-                      chatId:session.chat_id,
-                      id:session.id
+                      grouped
                   };
-                  localStorage.setItem('ai-chat-data', JSON.stringify(chatData));
-                  router.push('/chat');
-              }
+                    localStorage.setItem('ai-chat-data', JSON.stringify(chatData));
+                    router.push(`/chat/${sess.id}`);
+                  }
       }
         }
 

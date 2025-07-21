@@ -8,24 +8,6 @@ import Link from "next/link"
 export default function Home() {
   return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900">StudyPlan AI</span>
-          </div>
-          <div className="space-x-4">
-            <Link href="/login">
-              <Button variant="ghost">Login</Button>
-            </Link>
-            <Link href="/signup">
-              <Button>Get Started</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
         <div className="max-w-4xl mx-auto">
@@ -38,14 +20,14 @@ export default function Home() {
             study schedule based on course intensity and learning patterns.
           </p>
           <div className="flex justify-center space-x-4">
-            <Link href="/signup">
+            <Link href="/dashboard">
               <Button size="lg" className="px-8 py-3">
-                Start Planning Now
+                Start Demo Now
               </Button>
             </Link>
             <Link href="/demo">
               <Button variant="outline" size="lg" className="px-8 py-3 bg-transparent">
-                View Demo
+                View Documetation
               </Button>
             </Link>
           </div>

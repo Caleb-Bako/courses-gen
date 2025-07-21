@@ -331,3 +331,7 @@ const getIntensityColor = (courseName: string) => {
 //List of courses at the bottom
 // Chat history in chat room and adjust chat platform
 //Dash board editing 
+// Limit amount of chats and chat sessions for user since it is a demo but after limit is reached give option to join waitlist for launch 
+// Add terms and conditions for user to agree on
+//Animations
+//File documentation of project

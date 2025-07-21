@@ -90,7 +90,7 @@ export default function AIChatComponent({ coursesForDay, day, chatId }: AIChatPr
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!chatId) return;
+    // if (!chatId) return;
 
     const userMsg = { content: input, role: "user", type: "text" };
     setMessageList((prev) => [...prev, userMsg]);

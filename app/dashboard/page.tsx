@@ -4,12 +4,64 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Calendar, BookOpen, MessageSquare, Clock, User, Settings, Bell, ArrowRight, GraduationCap } from "lucide-react"
 import Link from "next/link"
+import { supabase } from "@/supabaseClient"
+import { auth, currentUser } from "@clerk/nextjs/server"
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const { userId } = await auth() 
+  const user = await currentUser();
+  let currentStep = 2;
+  // const saved = localStorage.getItem('ai-chat-data');
+  // if(saved){
+  //    const { priorityGrouped, chatId,storedID ,user,id} = JSON.parse(saved);
+  //    if(priorityGrouped){
+  //     currentStep = 1;
+  //    }
+  //    if(storedID){
+  //     currentStep = 2;
+  //    }
+  // }
+  // const table = localStorage.getItem('Table');
+  // if(table){
+  //   currentStep = 3;
+  // }
+
+  //getting list of user chats and timetables
+  // useEffect(()=>{
+  //     const retrieveHistoryandTable = async(id:string)=> {
+  //         const { data: history} = await supabase
+  //           .from("chat_sessions")
+  //           .select()
+  //           .eq("chat_id", id)
+  //         const { data: session } = await supabase
+  //           .from("student_courses")
+  //           .select()
+  //           .eq("chat_id", id)  
+  //           if(history){
+  //             // setChatHistory(history);
+  //           }
+
+  //     }
+  //      retrieveHistoryandTable(userId);
+  // }) 
+
+  const { data: history} = await supabase
+    .from("chat_sessions")
+    .select()
+    .eq("user_id", userId)
+    const { data: session } = await supabase
+      .from("student_courses")
+      .select()
+      .eq("chat_id", userId)  
+    
+      console.log("Gotten",history)
+
+      
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b">
+      {/* <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <Calendar className="h-8 w-8 text-blue-600" />
@@ -27,12 +79,12 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
-      </header>
+      </header> */}
 
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, John!</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {user?.firstName}!</h1>
           <p className="text-gray-600">Choose your tool to get started with academic planning.</p>
         </div>
 
@@ -57,7 +109,7 @@ export default function DashboardPage() {
                   <span>Timetable Status</span>
                   <span className="text-blue-600 font-medium">Ready to start</span>
                 </div>
-                <Progress value={0} className="h-2" />
+                <Progress value={(currentStep / 3) * 100} className="h-2" />
                 <p className="text-sm text-gray-600">
                   Start by adding your courses with their intensity levels and categories.
                 </p>
@@ -79,8 +131,8 @@ export default function DashboardPage() {
               </div>
 
               <Link href="/timetable-generator">
-                <Button className="w-full">
-                  Continue Timetable
+                <Button className="w-full cursor-pointer">
+                  Create Timetable
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -104,29 +156,29 @@ export default function DashboardPage() {
               <div className="space-y-4 mb-6">
                 <div className="flex items-center justify-between text-sm">
                   <span>Credit Usage</span>
-                  <span className="text-green-600 font-medium">18/24 units</span>
+                  <span className="text-green-600 font-medium">--/-- units</span>
                 </div>
                 <Progress value={75} className="h-2" />
                 <p className="text-sm text-gray-600">
-                  You have 6 credit units remaining. 3 carry-over courses available.
+                  You have -- credit units remaining. -- carry-over courses available.
                 </p>
               </div>
 
               <div className="space-y-2 mb-6">
                 <div className="flex items-center justify-between text-sm">
                   <span>Registered Courses</span>
-                  <Badge variant="secondary">8 courses</Badge>
+                  <Badge variant="secondary">-- courses</Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span>Carry-over Courses</span>
                   <Badge variant="outline" className="text-orange-600 border-orange-200">
-                    3 available
+                    -- available
                   </Badge>
                 </div>
               </div>
 
               <Link href="/course-management">
-                <Button className="w-full bg-green-600 hover:bg-green-700">
+                <Button className="w-full bg-green-600 hover:bg-green-700 cursor-pointer">
                   Manage Courses
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -137,16 +189,16 @@ export default function DashboardPage() {
 
         {/* Stats Overview */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Timetables</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">2</div>
-              <p className="text-xs text-muted-foreground">Generated this semester</p>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Timetables</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{session?.length}</div>
+                <p className="text-xs text-muted-foreground">Generated this semester</p>
+              </CardContent>
+            </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -154,8 +206,8 @@ export default function DashboardPage() {
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">18/24</div>
-              <p className="text-xs text-muted-foreground">6 units remaining</p>
+              <div className="text-2xl font-bold">--/--</div>
+              <p className="text-xs text-muted-foreground">-- units remaining</p>
             </CardContent>
           </Card>
 
@@ -165,7 +217,7 @@ export default function DashboardPage() {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">5</div>
+              <div className="text-2xl font-bold">{history?.length}</div>
               <p className="text-xs text-muted-foreground">Chat conversations</p>
             </CardContent>
           </Card>
@@ -182,34 +234,8 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Recent Activity */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Timetables</CardTitle>
-              <CardDescription>Your latest generated schedules</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { name: "Week 1-4 Schedule", courses: 8, created: "2 days ago", status: "Active" },
-                  { name: "Midterm Prep Schedule", courses: 6, created: "1 week ago", status: "Completed" },
-                  { name: "Final Exam Schedule", courses: 8, created: "2 weeks ago", status: "Draft" },
-                ].map((timetable, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">{timetable.name}</h4>
-                      <p className="text-sm text-gray-600">
-                        {timetable.courses} courses • {timetable.created}
-                      </p>
-                    </div>
-                    <Badge variant={timetable.status === "Active" ? "default" : "secondary"}>{timetable.status}</Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
+        {/* Recent Activity ==> arrange response in descending order*/}
+        <div className="">
           <Card>
             <CardHeader>
               <CardTitle>Recent AI Chats</CardTitle>
@@ -217,22 +243,15 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[
-                  { title: "Study Time Optimization", messages: 12, time: "2 hours ago" },
-                  { title: "Course Difficulty Analysis", messages: 8, time: "1 day ago" },
-                  { title: "Schedule Adjustments", messages: 15, time: "3 days ago" },
-                ].map((chat, index) => (
+                {history?.map((chat, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
                   >
-                    <div>
+                    <Link href ={`/chat/${chat.id}`}>
                       <h4 className="font-medium text-sm">{chat.title}</h4>
-                      <p className="text-xs text-gray-600">{chat.time}</p>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {chat.messages}
-                    </Badge>
+                      <p className="text-xs text-gray-600">{chat.created_at}</p>
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -243,3 +262,8 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+// progress bar based on what is in local storage
+//Number of chats and timetables
+//arrange the chats and timetable to be most recents(5 max to be shown)
+//link clerk to supabase auth 
