@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ArrowLeft, Send, Bot, User, Calendar, Clock, BookOpen } from "lucide-react"
 import Link from "next/link"
-import { FormEvent, useEffect, useState } from "react"
+import { FormEvent, useEffect, useRef, useState } from "react"
 import { supabase } from "@/supabaseClient"
 import Markdown from "react-markdown"
 import { useAuth } from "@clerk/nextjs"
@@ -34,13 +34,13 @@ interface History{
 
 export default function TimetableChatPage() {
   const { userId } = useAuth();
+  const initialized = useRef(false)
   const params = useParams<{ session: string;}>() 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [input, setInput] = useState<string>("");
   const [messageList, setMessageList] = useState<messages[]>([]);
   const [sessionId,setSessionId] = useState<string>("");
-  const [chatId, setChatId] = useState<string>("");
   const [tableId,setTableId] = useState<string>("");
   const [grouped, setGrouped] = useState<Record<Weekday, Course[]>>({
     Sunday:[],Monday: [],Tuesday: [],Wednesday: [],Thursday: [],Friday: [],Saturday:[]
@@ -50,81 +50,81 @@ export default function TimetableChatPage() {
   const [chatHistory,setChatHistory] = useState<History[]>([]);  
   
   useEffect(() => {
-    const init = async () => {
-      const saved = localStorage.getItem('ai-chat-data');
-      setSessionId(params.session);
-      retrieveChatHistory(userId);
-        //if params(session.id) exist then retrieve old messsages 
-        const { data: oldMessages } = await supabase
-          .from("chat_messages")
-          .select("role, content")
-          .eq("chat_id", params.session)
-          .order("created_at", { ascending: true });
-             console.log("Message gotten",oldMessages)  
-            if(oldMessages){
-              console.log("Message found");
-                setMessageList(
-                  (oldMessages || []).map((msg) => ({
-                      ...msg,
-                      type: "text",
-                  }))
-                )
-            }else{
-              if(saved){
-                const { priorityGrouped,grouped} = JSON.parse(saved);
-                const { data: session, error } = await supabase.from("student_courses").insert({
-                  chat_id:userId,
-                  Courses:grouped,
-                  Priority_Grouped:priorityGrouped,
-                  })
-                  .select()
-                  .single();
-                  console.log("DONE",session)
-                  setTableId(session?.id);
+    if (!initialized.current) {
+      initialized.current = true
+      
+      const init = async () => {
+        const saved = localStorage.getItem('ai-chat-data');
+        console.log("Transfered Courses",saved)
+        retrieveChatHistory(userId);
+  
+        if (params.session !== "new"){
+          setSessionId(params.session);
+  
+          const { data: history} = await supabase
+          .from("chat_sessions")
+          .select("title")
+          .eq("id", params.session)
+          .select()
+          .single();
+  
+          setTableId(history?.table)
+          console.log("Table Set", history?.table)
+  
+          const { data: oldMessages } = await supabase
+            .from("chat_messages")
+            .select("role, content")
+            .eq("chat_id", params.session)
+            .order("created_at", { ascending: true });
+               console.log("Message gotten",oldMessages)  
+              if(oldMessages){
+                console.log("Message found");
+                  setMessageList(
+                    (oldMessages || []).map((msg) => ({
+                        ...msg,
+                        type: "text",
+                    }))
+                  )
               }
-              setPriorityGrouped(priorityGrouped);
-              setGrouped(grouped);
-            }
-        // if (saved) {
-        //   const { priorityGrouped,user,id} = JSON.parse(saved);
-        //       setPriorityGrouped(priorityGrouped);
-        //       setChatId(user);
-        // }
-        localStorage.removeItem('ai-chat-data');
-        // if (saved) {
-        //     const { priorityGrouped, chatId,storedID ,user,id} = JSON.parse(saved);
-        //      retrieveChatHistory(userId);
-        //     if( userId ){
-        //       // setSessionId(storedID)
-        //       // setChatId(user)
-        //       // const { data: oldMessages } = await supabase
-        //       //   .from("chat_messages")
-        //       //   .select("role, content")
-        //       //   .eq("chat_id", storedID)
-        //       //   .order("created_at", { ascending: true });
-        //       //   console.log("Message found");
-        //       // setMessageList(
-        //       //   (oldMessages || []).map((msg) => ({
-        //       //       ...msg,
-        //       //       type: "text",
-        //       //   }))
-        //       //   );
-        //       //   console.log(messageList);
-        //     }else {
-        //       setPriorityGrouped(priorityGrouped);
-        //       setChatId(user);
-        //       setTableId(id);
-        //       console.log("new")
-        //     }
-        //     console.log("Saved",saved)  
-        //      localStorage.removeItem('ai-chat-data');
-    // }
-    };
-
-    init();
+        }else{
+          //create session
+          if(saved){
+            const { priorityGrouped,grouped} = JSON.parse(saved);
+            const { data: session, error } = await supabase.from("student_courses").insert({
+              chat_id:userId,
+              Courses:grouped,
+              Priority_Grouped:priorityGrouped,
+            })
+              .select()
+              .single();
+  
+              if(session){
+                const { data: sess } = await supabase
+                .from("chat_sessions")
+                .insert({user_id:userId, title: `Chat for `,table:session?.id })
+                .select()
+                .single(); 
+      
+                setSessionId(sess?.id)
+                console.log("DONE",session)
+      
+                setTableId(session?.id);
+                setPriorityGrouped(priorityGrouped);
+                setGrouped(grouped);
+              }
+  
+          }
+          // setPriorityGrouped(priorityGrouped);
+          // setGrouped(grouped);
+        }
+          //if params(session.id) exist then retrieve old messsages 
+          localStorage.removeItem('ai-chat-data');
+      };
+  
+      init();
+    }
   }, []);
 
-  console.log("Message",messageList)
 
 useEffect(() => {
   if(messageList.length > 0){
@@ -139,17 +139,6 @@ useEffect(() => {
   }
 }, [messageList])
 
-  //  const createSession= async (id:string) => {
-  //     const { data: session, error } = await supabase
-  //       .from("chat_sessions")
-  //       .insert({user_id:id, title: `Chat for ` })
-  //       .select()
-  //       .single();
-  //     if(session){
-  //       setSessionId(session.id);
-  //     }
-  //   console.log("Session Created");
-  // }
 
   const retrieveChatHistory = async(id:string | null | undefined)=> {
       const { data: history, error } = await supabase
@@ -163,7 +152,6 @@ useEffect(() => {
   }
 
     const handleSubmit = async (e: FormEvent) => {
-    console.log("Clicked",chatId)
       e.preventDefault();
       // if (!chatId) return;
   
@@ -254,8 +242,9 @@ const extracText = () => {
     const text = cleanText(rawText);
     //Regex to basically extract Day, Course, Start Time for Studying and End Time from AI text
     const matches = [...text.matchAll(
-      /\*\*Day:\*\*\s*(.*?)\s*\n+\s*\*\*Start Time:\*\*\s*(.*?)\s*\n+\s*\*\*End Time:\*\*\s*(.*?)\s*\n+\s*\*\*Courses:\*\*\s*(.*?)(?=\n{2,}|\Z)/gi
-   )];
+      /\*\*Day:\*\*\s*(.+?)\s*\n+\*\*Start Time:\*\*\s*(.+?)\s*\n+\*\*End Time:\*\*\s*(.+?)\s*\n+\*\*Courses:\*\*\s*(.+?)(?=\n{2,}|$)/gi
+    )];
+
 
     if (matches.length > 0) {
       const updates: Record<Weekday, { Day:string; Course: string; Start: string; End: string }[]> = {

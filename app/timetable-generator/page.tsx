@@ -162,20 +162,13 @@ export default function TimetableGeneratorPage() {
             localStorage.setItem('ai-chat-data', JSON.stringify(chatData));
             router.push(`/chat/${storedID}`);
         }else{
-              const { data: sess, error } = await supabase
-                .from("chat_sessions")
-                .insert({user_id:userId, title: `Chat for ` })
-                .select()
-                .single();
-                if(sess){
-                  const chatData = {
-                      priorityGrouped,
-                      grouped
-                  };
-                    localStorage.setItem('ai-chat-data', JSON.stringify(chatData));
-                    router.push(`/chat/${sess.id}`);
-                  }
-      }
+            const chatData = {
+              priorityGrouped,
+              grouped
+            };
+            localStorage.setItem('ai-chat-data', JSON.stringify(chatData));
+            router.push(`/chat/new`);     
+          }
         }
 
   return (
@@ -545,3 +538,5 @@ export default function TimetableGeneratorPage() {
     </div>
   )
 }
+
+//Edit Courses
