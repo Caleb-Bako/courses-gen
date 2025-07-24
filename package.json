@@ -23,6 +23,7 @@
     "embla-carousel-react": "^8.6.0",
     "inngest": "^3.40.1",
     "lucide-react": "^0.514.0",
+    "motion": "^12.23.7",
     "next": "15.3.3",
     "openai": "^5.5.1",
     "react": "^19.0.0",

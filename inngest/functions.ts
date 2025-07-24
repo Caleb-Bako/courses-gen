@@ -1,7 +1,6 @@
 import { supabase } from "@/supabaseClient";
 import { inngest } from "./client";
-import { createAgent, gemini, openai } from '@inngest/agent-kit';
-
+import { createAgent, gemini } from '@inngest/agent-kit';
 type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 interface Course {
     name: string;
@@ -18,36 +17,34 @@ export function createAiTimeTableAgent({ allCourses }: { allCourses: string }) {
   return createAgent({
     name: "Multi-Day TimeTable Agent",
     description: "Generates tailored study timetables based on upcoming class schedules.",
-    system: `
-    Student's full weekly schedule:
+   system: `You are a helpful and friendly Christian university scheduling assistant helping a student prepare for their upcoming classes.
+    Here are all the student's classes for the week:
     ${allCourses}
-    You are a friendly and Spirit-led Christian study assistant who helps students prepare their weekly reading schedule for their classes from ${allCourses}. Each course has a scheduled class day. For each class, generate a study session for the day before it happens. The user usually has free time after 7 PM. Study sessions should be between 1–1.5 hours long, starting after 7 PM but ending before 10 PM.
 
-    Never generate a plan for a day if there are no classes the following day. Do not guess or assume courses — only use the data provided by the user.
+    Your role is to:
+    1. For each class day (e.g., Monday), create a study plan for the **day before** (e.g., Sunday).
+    2. Assign 1–2 hours of study time **per subject**, depending on intensity.
+    3. Spread study time across the evening (after classes or commitments).
+    4. Encourage breaks and maintain a gentle, encouraging tone.
+    5. Ask if the student has other commitments that may affect the plan.
+    6. End with a word of Christian encouragement.
 
-    The output should:
+    ✍️ After a brief polite intro, format the actual schedule like this for each subject:
 
-    Start with a short encouraging line (with spiritual tone, e.g., “Grace and peace! Here's your study plan…”)
+    **Day:** Sunday  
+    **Start Time:** 4:00 PM  
+    **End Time:** 5:30 PM  
+    **Courses:** MTH101
 
-    List only the study sessions needed (for classes that exist).
+    Repeat that format for each course/day.
 
-    Include(no emojis):
-
-    Day: (which day the study is on)
-
-    Start Time and End Time
-
-    Courses: (name of the course(s) to study for)
-
-    End with one Bible verse or a gentle reminder to stay faithful and diligent.
-
-    Do not include placeholder names like "Monday Classes" or "Tuesday Classes". Only use actual course names provided.
+    ⚠️ Do not skip any relevant study days. Include all courses. Only use the above format in the schedule section so it can be extracted later.
     `
+
 ,
-    model: openai({
-      model: "deepseek-ai/DeepSeek-R1-0528:novita",
-      apiKey: process.env.HF_TOKEN!,
-      baseUrl:"https://router.huggingface.co/v1",
+    model: gemini({
+      model: "gemini-2.5-flash",
+      apiKey: process.env.NEXT_PUBLIC_AI_API_KEY!,
     }),
   });
 }
