@@ -12,22 +12,28 @@ import {
   AnimatedCard,
   AnimatedProgress,
 } from "@/components/animations/dashboardanimation"
+import ClientLocalStorageHandler from "@/components/StepsStorage"
+type SearchParamsType = {
+  step?: string | number
+  [key: string]: string | string[] | number | undefined
+}
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: SearchParamsType }) {
   const { userId } = await auth()
   const user = await currentUser()
-  const currentStep = 2
+  const currentStep = Number(searchParams?.step ?? 0)
 
   const { data: history } = await supabase.from("chat_sessions").select().eq("user_id", userId)
 
   const { data: session } = await supabase.from("student_courses").select().eq("chat_id", userId)
-
+  
   console.log("Gotten", history)
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
+        <ClientLocalStorageHandler />
         <AnimatedWrapper variant="staggerContainer">
           <AnimatedWrapper variant="fadeInUp">
             <div className="mb-8">

@@ -367,11 +367,16 @@ export default function TimetableChatPage() {
 
       console.log("✅ Stored all time blocks:", updates)
 
+      const stepData = {
+       step:3
+      }
+       localStorage.setItem("steps-data", JSON.stringify(stepData))
       const chatData = {
         tableId,
       }
       localStorage.setItem("Table", JSON.stringify(chatData))
       router.push("/timetable-generator/result")
+
     } else {
       console.log("❌ No time block found.")
     }

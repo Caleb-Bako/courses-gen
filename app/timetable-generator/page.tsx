@@ -197,6 +197,10 @@ export default function TimetableGeneratorPage() {
       startTime: "",
       endTime: "",
     })
+    const stepData = {
+       step:1
+      }
+       localStorage.setItem("steps-data", JSON.stringify(stepData))
   }
 
   const resume = () => {
@@ -217,6 +221,10 @@ export default function TimetableGeneratorPage() {
 
   async function handleScheduleDay(response: string) {
     console.log(`Starting AI conversation for Student with:`)
+      const stepData = {
+       step:2
+      }
+       localStorage.setItem("steps-data", JSON.stringify(stepData))
     if (storedID === response) {
       const chatData = {
         user: userId,
