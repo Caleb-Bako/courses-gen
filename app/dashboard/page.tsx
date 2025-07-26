@@ -13,9 +13,7 @@ import {
   AnimatedProgress,
 } from "@/components/animations/dashboardanimation"
 import ClientLocalStorageHandler from "@/components/StepsStorage"
-type PageProps = {
-  searchParams?: { [key: string]: string | string[] | undefined }
-}
+
 
 export default async function DashboardPage({ searchParams }:{searchParams: Promise<{step:string}>}) {
   const { userId } = await auth()
