@@ -18,10 +18,15 @@ type SearchParamsType = {
   [key: string]: string | string[] | number | undefined
 }
 
-export default async function DashboardPage({ searchParams }: { searchParams: SearchParamsType }) {
+type PageProps = {
+  searchParams: SearchParamsType
+}
+
+export default async function DashboardPage({ searchParams }: PageProps) {
   const { userId } = await auth()
   const user = await currentUser()
-  const currentStep = Number(searchParams?.step ?? 0)
+  const {step} = await searchParams
+  const currentStep = Number(step ?? 0)
 
   const { data: history } = await supabase.from("chat_sessions").select().eq("user_id", userId)
 
