@@ -77,6 +77,7 @@ const bounceIn = {
 export default function TimetableGeneratorPage() {
   const { userId } = useAuth()
   const router = useRouter()
+  let stepdata = ""
   const [currentStep, setCurrentStep] = useState(1)
   const [schedule, setSchedule] = useState<Course[]>([])
   const [storedID, setStored] = useState<string>("")
@@ -92,8 +93,6 @@ export default function TimetableGeneratorPage() {
     Level: "",
     Department:""
   })
-
-
   const [grouped, setGrouped] = useState<Record<Weekday, Course[]>>({
     Monday: [],
     Tuesday: [],
@@ -171,11 +170,16 @@ export default function TimetableGeneratorPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("session")
+    const savedStep = localStorage.getItem("steps-data")
     if (saved) {
       const { chatId, sessionId } = JSON.parse(saved)
       console.log("ID Gotten:", chatId, sessionId)
       setStored(sessionId)
     }
+    if (savedStep) {
+        const{step} = JSON.parse(savedStep);
+        stepdata = step;
+      }
   }, [])
 
   function handleCategoryChange(category: Course["category"]) {
@@ -255,7 +259,7 @@ export default function TimetableGeneratorPage() {
       >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard">
+            <Link href={`/dashboard?step=${stepdata}`}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />

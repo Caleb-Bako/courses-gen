@@ -27,6 +27,7 @@ export default function CourseSelectionPage() {
   const [filterLevel, setFilterLevel] = useState("All levels")
   const [filterDepartment, setFilterDepartment] = useState("All departments")
   const [courses, setCourses] = useState<Course[]>([])
+  let steps = ""
 
 useEffect(() => {
   const fetchCourses = async () => {
@@ -52,6 +53,11 @@ useEffect(() => {
         )
 
       setCourses(flatCourses)
+      const saved = localStorage.getItem("steps-data")
+      if (saved) {
+        const{step} = JSON.parse(saved);
+        steps = step;
+      }
     }
   }
 
@@ -96,7 +102,7 @@ const filteredCourses = courses.filter((course) => {
       {/* Header */}
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/dashboard">
+        <Link href={`/dashboard?step=${steps}`}>
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard

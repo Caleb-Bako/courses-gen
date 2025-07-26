@@ -17,12 +17,12 @@ type PageProps = {
   searchParams?: { [key: string]: string | string[] | undefined }
 }
 
-export default async function DashboardPage({ searchParams }: PageProps) {
+export default async function DashboardPage({ searchParams }:{searchParams: Promise<{step:string}>}) {
   const { userId } = await auth()
   const user = await currentUser()
-  const rawStep = searchParams?.step
-  const stepParam = Array.isArray(rawStep) ? rawStep[0] : rawStep
-  const currentStep = stepParam ? parseInt(stepParam) : 0
+  const {step} = await searchParams
+
+  const currentStep = step ? parseInt(step) : 0
 
   const { data: history } = await supabase.from("chat_sessions").select().eq("user_id", userId)
 

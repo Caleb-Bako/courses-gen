@@ -58,7 +58,7 @@ export default function Home() {
           </motion.p>
 
           <motion.div className="flex justify-center space-x-4" variants={fadeInUp}>
-            <Link href="/dashboard">
+            <Link href="/dashboard?step=0">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button size="lg" className="px-8 py-3">
                   Start Demo Now
