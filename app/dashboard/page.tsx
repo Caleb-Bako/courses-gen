@@ -45,7 +45,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
 
         {/* Main Tools - Two Sectors */}
         <AnimatedWrapper variant="staggerContainer">
-          <div className="grid lg:grid-cols-2 gap-8 mb-8">
+          <div className="grid lg:grid-cols-3 gap-8 mb-8">
             {/* Timetable Generator */}
             <AnimatedCard>
               <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 group hover:shadow-lg transition-all duration-300">
@@ -66,7 +66,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
                       <span>Timetable Status</span>
                       <span className="text-blue-600 font-medium">Ready to start</span>
                     </div>
-                    <AnimatedProgress value={(currentStep / 3) * 100} className="h-2" />
+                    <AnimatedProgress value={(currentStep / 3) * 100} className="h-2" color="blue"/>
                     <p className="text-sm text-gray-600">
                       Start by adding your courses with their intensity levels and categories.
                     </p>
@@ -97,8 +97,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
 
                   <Link href="/timetable-generator">
                     <AnimatedButton className="w-full">
-                      <Button className="w-full cursor-pointer group-hover:bg-blue-700 transition-colors">
-                        Create Timetable
+                      <Button className="w-full cursor-pointer bg-blue-500 hover:bg-blue-700 group-hover:bg-blue-700 transition-colors">
+                        {currentStep>=1 ? "Continue Timetable":"Create Timetable"}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </AnimatedButton>
@@ -127,7 +127,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
                       <span>Credit Usage</span>
                       <span className="text-green-600 font-medium">--/-- units</span>
                     </div>
-                    <AnimatedProgress value={75} className="h-2" />
+                    <AnimatedProgress value={75} className="h-2 text-bg-500" color="green" />
                     <p className="text-sm text-gray-600">
                       You have -- credit units remaining. -- carry-over courses available.
                     </p>
@@ -156,6 +156,63 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
                     <AnimatedButton className="w-full">
                       <Button className="w-full bg-green-600 hover:bg-green-700 cursor-pointer group-hover:bg-green-700 transition-colors">
                         Manage Courses
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </AnimatedButton>
+                  </Link>
+                </CardContent>
+              </Card>
+            </AnimatedCard>
+
+            {/* Get Courses */}
+            <AnimatedCard>
+              <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 group hover:shadow-lg transition-all duration-300">
+                <CardHeader>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <AnimatedIcon className="p-3 bg-purple-600 rounded-lg">
+                       <BookOpen className="h-6 w-6 text-white" />
+                    </AnimatedIcon>
+                    <div>
+                      <CardTitle className="text-xl">Search Courses</CardTitle>
+                      <CardDescription>Don't know which courses you have for a semester. Come on down and get them </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Recorded Universities</span>
+                      <span className="text-purple-600 font-medium">--/--</span>
+                    </div>
+                    <AnimatedProgress value={75} className="h-2 text-bg-500" color="purple" />
+                    <p className="text-sm text-gray-600">
+                      -- Nigerian Universities Recorded with their departments and courses up-to-date.
+                    </p>
+                  </div>
+
+                  <AnimatedWrapper variant="staggerContainer">
+                    <div className="space-y-2 mb-6">
+                      <AnimatedWrapper variant="slideInLeft">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Recorded Departments</span>
+                          <Badge variant="secondary">-- Departments</Badge>
+                        </div>
+                      </AnimatedWrapper>
+                      <AnimatedWrapper variant="slideInLeft" delay={0.1}>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Recorded Courses </span>
+                          <Badge variant="outline" className="text-orange-600 border-orange-200">
+                            -- available
+                          </Badge>
+                        </div>
+                      </AnimatedWrapper>
+                    </div>
+                  </AnimatedWrapper>
+
+                  <Link href="/courses">
+                    <AnimatedButton className="w-full">
+                      <Button className="w-full bg-purple-500 hover:from-purple-100 hover:to-purple-150 cursor-pointer group-hover:bg-purple-700 transition-colors">
+                        Get Courses
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </AnimatedButton>
@@ -194,7 +251,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
               {
                 title: "Account Status",
                 value: "Active",
-                subtitle: "Member since 2024",
+                subtitle: "Member since 2025",
                 icon: Clock,
                 color: "text-orange-600",
               },
@@ -259,3 +316,4 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
 //Use collection of courses to create possible list of courses based on department and level 
 //Logic is if course appears more than 3 in courses for timetable then it will appear to the list 
 //List of Courses for each department 
+//

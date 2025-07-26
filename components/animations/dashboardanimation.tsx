@@ -96,12 +96,12 @@ export function AnimatedCard({ children, className }: { children: ReactNode; cla
   )
 }
 
-export function AnimatedProgress({ value, className }: { value: number; className?: string }) {
+export function AnimatedProgress({ value, className,color }: { value: number; className?: string,color:string }) {
   return (
     <div className="relative">
       <div className={`h-2 bg-gray-200 rounded-full ${className}`} />
       <motion.div
-        className="absolute top-0 left-0 h-2 bg-blue-600 rounded-full"
+        className={`absolute top-0 left-0 h-2 bg-${color}-600 rounded-full`}
         initial={{ width: 0 }}
         animate={{ width: `${value}%` }}
         transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}

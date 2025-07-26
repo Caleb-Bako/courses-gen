@@ -13,6 +13,7 @@ import Markdown from "react-markdown"
 import { useAuth } from "@clerk/nextjs"
 import { useParams, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import { toast } from "sonner"
 
 type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday"
 
@@ -28,8 +29,9 @@ interface Course {
   time?: string
   category: "calculation" | "coding" | "theory"
   intensity: "hard" | "easy" | "mid" | "hard-to-grasp" | "bulky" | "both-hard-bulky"
-  startTime?: string
-  endTime?: string
+  University: string
+  Level: string
+  Department: string
 }
 
 interface History {
@@ -378,6 +380,7 @@ export default function TimetableChatPage() {
       router.push("/timetable-generator/result")
 
     } else {
+      toast("❌ No time block found.")
       console.log("❌ No time block found.")
     }
   }
@@ -584,12 +587,12 @@ export default function TimetableChatPage() {
               {/* Message Input */}
               <motion.form
                 onSubmit={handleSubmit}
-                className="bg-white border-t p-4 absolute inset-x-0 bottom-15"
+                className="bg-white border-t p-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.4 }}
               >
-                <div className="flex space-x-2 mb-3">
+                <div className="flex space-x-2">
                   <motion.div className="flex-1" whileFocus={{ scale: 1.01 }}>
                     <Input
                       placeholder="Ask about your study schedule..."
@@ -610,42 +613,25 @@ export default function TimetableChatPage() {
                     </Button>
                   </motion.div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex space-x-2">
-                    <motion.div whileHover={{ scale: 1.05 }}>
-                      <Button variant="outline" size="sm">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Adjust Times
-                      </Button>
-                    </motion.div>
-                    <motion.div whileHover={{ scale: 1.05 }}>
-                      <Button variant="outline" size="sm">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Weekend Schedule
-                      </Button>
-                    </motion.div>
-                  </div>
-                </div>
               </motion.form>
-
-              <motion.div
-                className="p-4"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.7, duration: 0.4 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button className="bg-green-600 hover:bg-green-700" onClick={extracText}>
-                  <motion.div
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                  </motion.div>
-                  Generate Timetable
-                </Button>
-              </motion.div>
+               <motion.div
+                      className="px-4"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.7, duration: 0.4 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button className="bg-green-600 hover:bg-green-700" onClick={extracText}>
+                        <motion.div
+                          animate={{ rotate: [0, 360] }}
+                          transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                        </motion.div>
+                        Generate Timetable
+                      </Button>
+                    </motion.div>
             </Card>
           </motion.div>
         </div>

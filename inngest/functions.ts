@@ -3,13 +3,14 @@ import { inngest } from "./client";
 import { createAgent, gemini } from '@inngest/agent-kit';
 type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 interface Course {
-    name: string;
-    day: Weekday;
-    time?: string
-    category: 'calculation' | 'coding' | 'theory';
-    intensity: 'hard' | 'easy' | 'mid' | 'hard-to-grasp' | 'bulky' | 'both-hard-bulky';
-    startTime?: string;
-    endTime?: string;
+  name: string
+  day: Weekday
+  time?: string
+  category: "calculation" | "coding" | "theory"
+  intensity: "hard" | "easy" | "mid" | "hard-to-grasp" | "bulky" | "both-hard-bulky"
+  University: string
+  Level: string
+  Department: string
 }
 
 
@@ -69,8 +70,8 @@ export function createAiTimeTableAgent({ allCourses }: { allCourses: string }) {
         Day: ${course.day}
         Intensity: ${course.intensity}
         Category: ${course.category}
-        Start Time: ${course.startTime || "Not set"}
-        End Time: ${course.endTime || "Not set"}`;
+        Start Time: ${course.Department || "Not set"}
+        End Time: ${course.Level || "Not set"}`;
               }).join("\n\n");
 
               allCourses += `\n\n🗓️ For ${day}:\n${dayDetails}\n`;

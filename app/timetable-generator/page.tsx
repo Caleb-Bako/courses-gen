@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input"
 import { useAuth } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const courseSchema = z.object({
   name: z.string().min(1, "Course name is required"),
@@ -27,8 +28,9 @@ const courseSchema = z.object({
   time: z.string().optional(),
   category: z.enum(["calculation", "coding", "theory"]),
   intensity: z.enum(["hard", "easy", "mid", "hard-to-grasp", "bulky", "both-hard-bulky"]),
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
+  University: z.string().optional(),
+  Level: z.string().optional(),
+  Department: z.string().optional(),
 })
 
 type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday"
@@ -86,9 +88,11 @@ export default function TimetableGeneratorPage() {
     time: "",
     category: "calculation",
     intensity: "mid",
-    startTime: "",
-    endTime: "",
+    University: "",
+    Level: "",
+    Department:""
   })
+
 
   const [grouped, setGrouped] = useState<Record<Weekday, Course[]>>({
     Monday: [],
@@ -194,8 +198,6 @@ export default function TimetableGeneratorPage() {
       time: "",
       category: "calculation",
       intensity: "mid",
-      startTime: "",
-      endTime: "",
     })
     const stepData = {
        step:1
@@ -439,7 +441,7 @@ export default function TimetableGeneratorPage() {
                       <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 2, ease: "easeInOut" }}>
                         <CheckCircle2 className="h-5 w-5 text-green-500" />
                       </motion.div>
-                      <span>Step 1: Courses Added Successfully</span>
+                      <span>Step 1: Add Courses</span>
                     </div>
                     <div>
                       <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -456,12 +458,57 @@ export default function TimetableGeneratorPage() {
                 <CardContent>
                   <div className="flex justify-between gap-4">
                     <div className="space-y-4 w-full">
+                      <motion.div variants={scaleIn} className="flex">
+                          <Input
+                            placeholder="University e.g Bingham University"
+                            value={form.University}
+                            onChange={(e) => setForm({ ...form, University: e.target.value })}
+                            className="w-full"
+                          />
+                          <Select value={form.University} onValueChange={(value) => setForm({ ...form, University: value })} >
+                            <SelectTrigger>
+                              <SelectValue placeholder="" />
+                            </SelectTrigger>
+                            <SelectContent className="w-full">
+                              <SelectItem value="Bingham University">Bingham University</SelectItem>
+                              <SelectItem value="Veritas University">Veritas University</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </motion.div>
                       <motion.div
                         className="grid grid-cols-2 gap-4 w-full"
                         variants={staggerContainer}
                         initial="initial"
                         animate="animate"
                       >
+                        <motion.div variants={scaleIn}>
+                          <Select value={form.Department}  onValueChange={(value) => setForm({ ...form, Department: value })}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Department" />
+                            </SelectTrigger>
+                            <SelectContent className="w-full">
+                              <SelectItem value="Computer Science">Computer Science</SelectItem>
+                              <SelectItem value="Mass Com">Mass Com</SelectItem>
+                              <SelectItem value="Cyber Security">Cyber Security</SelectItem>
+                              <SelectItem value="Public Health">Public Health</SelectItem>
+                              <SelectItem value="Architecture">Architecture</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </motion.div>
+                        <motion.div variants={scaleIn}>
+                          <Select value={form.Level}  onValueChange={(value) => setForm({ ...form, Level: value })}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Level" />
+                            </SelectTrigger>
+                            <SelectContent className="w-full">
+                              <SelectItem value="100">100 Level</SelectItem>
+                              <SelectItem value="200">200 Level</SelectItem>
+                              <SelectItem value="300">300 Level</SelectItem>
+                              <SelectItem value="400">400 Level</SelectItem>
+                              <SelectItem value="500">500 Level</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </motion.div>
                         <motion.div variants={scaleIn}>
                           <Input
                             placeholder="Course Name e.g MTH"
@@ -534,7 +581,7 @@ export default function TimetableGeneratorPage() {
                       </motion.div>
 
                       <motion.div
-                        className="flex justify-between"
+                        className="flex justify-between flex-wrap"
                         variants={staggerContainer}
                         initial="initial"
                         animate="animate"

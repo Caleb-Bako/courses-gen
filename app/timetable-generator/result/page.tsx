@@ -17,8 +17,9 @@ interface Course {
   time?: string
   category: "calculation" | "coding" | "theory"
   intensity: "hard" | "easy" | "mid" | "hard-to-grasp" | "bulky" | "both-hard-bulky"
-  startTime?: string
-  endTime?: string
+  University: string
+  Level: string
+  Department: string
 }
 
 interface Extract {
