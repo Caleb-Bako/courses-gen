@@ -13,20 +13,16 @@ import {
   AnimatedProgress,
 } from "@/components/animations/dashboardanimation"
 import ClientLocalStorageHandler from "@/components/StepsStorage"
-type SearchParamsType = {
-  step?: string | number
-  [key: string]: string | string[] | number | undefined
-}
-
 type PageProps = {
-  searchParams: SearchParamsType
+  searchParams?: { [key: string]: string | string[] | undefined }
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
   const { userId } = await auth()
   const user = await currentUser()
-  const {step} = await searchParams
-  const currentStep = Number(step ?? 0)
+  const rawStep = searchParams?.step
+  const stepParam = Array.isArray(rawStep) ? rawStep[0] : rawStep
+  const currentStep = stepParam ? parseInt(stepParam) : 0
 
   const { data: history } = await supabase.from("chat_sessions").select().eq("user_id", userId)
 
