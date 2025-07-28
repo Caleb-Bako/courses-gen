@@ -39,20 +39,22 @@ useEffect(() => {
     }
 
     if (data && data.length > 0) {
-      // data[0].Courses looks like: { Monday: [...], Tuesday: [...], ... }
+      const allFlatCourses: Course[] = data.flatMap((row) => {
+      const dayBasedCourses = row.Courses // { Monday: [...], ... }
+      return Object.entries(dayBasedCourses).flatMap(([day, courseList]) =>
+        (courseList as any[]).map((course) => ({
+          ...course,
+          day: day as string,
+        }))
+      )
+    })
 
-      const dayBasedCourses = data[0].Courses
+    const uniqueCourses = Array.from(
+    new Map(allFlatCourses.map(course => [course.name + course.day, course])).values()
+  )
 
-      // Flatten all days into one course list with correct `day` added
-      const flatCourses: Course[] = Object.entries(dayBasedCourses)
-        .flatMap(([day, courseList]) =>
-          (courseList as any[]).map((course) => ({
-            ...course,
-            day: day as string,
-          }))
-        )
+  setCourses(uniqueCourses)
 
-      setCourses(flatCourses)
       const saved = localStorage.getItem("steps-data")
       if (saved) {
         const{step} = JSON.parse(saved);
