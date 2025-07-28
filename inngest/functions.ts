@@ -55,8 +55,12 @@ export function createAiTimeTableAgent({ allCourses }: { allCourses: string }) {
   { id: "AiTableAgent" },
   { event: "AiTableAgent" },
   async ({ event }) => {
-    const { userInput } = event.data;
-    const { priorityGrouped, message } = userInput;
+  const userInput = event.data?.userInput ?? {};
+  const { priorityGrouped, message } = userInput;
+
+  if (!priorityGrouped || !message) {
+    throw new Error("Missing required userInput fields (priorityGrouped, message)");
+  }
 
     // Create stringified details for all days
     let allCourses = "";
