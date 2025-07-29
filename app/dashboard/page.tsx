@@ -26,7 +26,6 @@ export default async function DashboardPage({ searchParams }:{searchParams: Prom
 
   const { data: session } = await supabase.from("student_courses").select().eq("chat_id", userId)
   
-  console.log("Gotten", history)
 
   return (
     <div className="min-h-screen bg-gray-50">

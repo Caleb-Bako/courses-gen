@@ -84,21 +84,6 @@ const filteredCourses = courses.filter((course) => {
 })
 
 
-  const getIntensityColor = (intensity: string) => {
-    switch (intensity.toLowerCase()) {
-      case "hard":
-      case "both-hard-bulky":
-        return "destructive"
-      case "mid":
-      case "hard-to-grasp":
-        return "default"
-      case "easy":
-        return "secondary"
-      default:
-        return "outline"
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -211,7 +196,7 @@ const filteredCourses = courses.filter((course) => {
                             <p className="text-sm text-gray-600">{course.Department}</p>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Badge variant={getIntensityColor(course.intensity)}>{course.intensity}</Badge>
+                            <Badge>{course.time}</Badge>
                             <Badge variant="outline">{course.category}</Badge>
                           </div>
                         </div>

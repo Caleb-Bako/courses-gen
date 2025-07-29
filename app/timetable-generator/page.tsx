@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import LoadingThreeDotsJumping from "@/components/animations/loading"
+import { UniversityCombobox } from "@/components/UniComboBox"
 
 const courseSchema = z.object({
   name: z.string().min(1, "Course name is required"),
@@ -467,24 +468,13 @@ export default function TimetableGeneratorPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-between gap-4">
+                  <div>
                     <div className="space-y-4 w-full">
-                      <motion.div variants={scaleIn} className="flex">
-                          <Input
-                            placeholder="University e.g Bingham University"
-                            value={form.University}
-                            onChange={(e) => setForm({ ...form, University: e.target.value })}
-                            className="w-full"
+                      <motion.div variants={scaleIn}>
+                         <UniversityCombobox
+                            value={form.University ?? ""}
+                            onChange={(val) => setForm({ ...form, University: val })}
                           />
-                          <Select value={form.University} onValueChange={(value) => setForm({ ...form, University: value })} >
-                            <SelectTrigger>
-                              <SelectValue placeholder="" />
-                            </SelectTrigger>
-                            <SelectContent className="w-full">
-                              <SelectItem value="Bingham University">Bingham University</SelectItem>
-                              <SelectItem value="Veritas University">Veritas University</SelectItem>
-                            </SelectContent>
-                          </Select>
                         </motion.div>
                       <motion.div
                         className="grid grid-cols-2 gap-4 w-full"
@@ -529,12 +519,15 @@ export default function TimetableGeneratorPage() {
                           />
                         </motion.div>
                         <motion.div variants={scaleIn}>
-                          <Input
-                            placeholder="e.g 10am to 12pm or 10am - 12pm"
-                            value={form.time}
-                            onChange={(e) => setForm({ ...form, time: e.target.value })}
-                            className="w-full"
-                          />
+                          <Select value={form.time}  onValueChange={(value) => setForm({ ...form, time: value })}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Semester" />
+                            </SelectTrigger>
+                            <SelectContent className="w-full">
+                              <SelectItem value="1st Semseter">1st Semseter</SelectItem>
+                              <SelectItem value="2nd Semseter">2nd Semseter</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </motion.div>
                       </motion.div>
 
