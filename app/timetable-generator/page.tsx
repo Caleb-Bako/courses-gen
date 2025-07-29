@@ -232,6 +232,7 @@ export default function TimetableGeneratorPage() {
   }
 
   async function handleScheduleDay(response: string) {
+    setLoading(true)
     console.log(`Starting AI conversation for Student`)
       const stepData = {
        step:2
