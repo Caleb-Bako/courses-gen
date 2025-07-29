@@ -16,6 +16,7 @@ import {
 } from "@/components/animations/dashboardanimation"
 import { Badge } from "@/components/ui/badge"
 import LoadingThreeDotsJumping from "@/components/animations/loading"
+import { UnderConstructionDialog } from "@/components/ConstructionDialog"
 
 export default function DashboardPage() {
   const { user } = useUser()
@@ -23,6 +24,7 @@ export default function DashboardPage() {
   const [session, setSession] = useState<any[]>([])
   const [currentStep, setCurrentStep] = useState<number>(0)
   const [loading,setLoading] = useState<Boolean>(false)
+  const [open, setOpen] = useState(false)
   function isLoading(){
       setLoading(true)
     }
@@ -61,6 +63,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       {loading ? <LoadingThreeDotsJumping/> :(
       <div className="container mx-auto px-4 py-8">
+         <UnderConstructionDialog open={open} onOpenChange={setOpen} />
         <AnimatedWrapper variant="staggerContainer">
           <AnimatedWrapper variant="fadeInUp">
             <div className="mb-8">
@@ -179,15 +182,12 @@ export default function DashboardPage() {
           </AnimatedWrapper>
         </div>
       </AnimatedWrapper>
-
-      <Link href="/course-management">
         <AnimatedButton className="w-full">
-          <Button onClick={isLoading} className="w-full bg-green-600 hover:bg-green-700 cursor-pointer group-hover:bg-green-700 transition-colors">
+          <Button  onClick={() => setOpen(true)} className="w-full bg-green-600 hover:bg-green-700 cursor-pointer group-hover:bg-green-700 transition-colors">
             Manage Courses
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </AnimatedButton>
-      </Link>
     </CardContent>
   </Card>
 </AnimatedCard>
