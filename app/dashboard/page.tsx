@@ -342,3 +342,7 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+//GIVE FULL LIST OF UNI
+//COURSES LIST OF UNI
+//Whats the pitch...whats the selling idea..what is it trying to achieve
