@@ -67,7 +67,7 @@ export default function Home() {
           </motion.p>
 
           <motion.div className="flex justify-center space-x-4" variants={fadeInUp}>
-            <Link href="/dashboard?step=0">
+            <Link href="/dashboard">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button 
                 onClick={isLoading}

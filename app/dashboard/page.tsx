@@ -1,10 +1,12 @@
+'use client'
+
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Calendar, BookOpen, MessageSquare, Clock, ArrowRight, GraduationCap } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/supabaseClient"
-import { auth, currentUser } from "@clerk/nextjs/server"
+import { useUser } from "@clerk/nextjs"
 import {
   AnimatedWrapper,
   AnimatedIcon,
@@ -12,26 +14,53 @@ import {
   AnimatedCard,
   AnimatedProgress,
 } from "@/components/animations/dashboardanimation"
-import ClientLocalStorageHandler from "@/components/StepsStorage"
+import { Badge } from "@/components/ui/badge"
+import LoadingThreeDotsJumping from "@/components/animations/loading"
+
+export default function DashboardPage() {
+  const { user } = useUser()
+  const [history, setHistory] = useState<any[]>([])
+  const [session, setSession] = useState<any[]>([])
+  const [currentStep, setCurrentStep] = useState<number>(0)
+  const [loading,setLoading] = useState<Boolean>(false)
+  function isLoading(){
+      setLoading(true)
+    }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const stepFromStorage = localStorage.getItem("steps-data")
+      if (stepFromStorage) {
+        const{step} = JSON.parse(stepFromStorage)
+        setCurrentStep(parseInt(step))
+        console.log("Step: ",step)
+
+      }
+      const userId = user?.id
+      if (!userId) return
+
+      const { data: historyData } = await supabase
+        .from("chat_sessions")
+        .select()
+        .eq("user_id", userId)
+      setHistory(historyData || [])
+
+      const { data: sessionData } = await supabase
+        .from("student_courses")
+        .select()
+        .eq("chat_id", userId)
+      setSession(sessionData || [])
+    }
+
+    if (user) fetchData()
+  }, [user])
 
 
-export default async function DashboardPage({ searchParams }:{searchParams: Promise<{step:string}>}) {
-  const { userId } = await auth()
-  const user = await currentUser()
-  const {step} = await searchParams
-
-  const currentStep = step ? parseInt(step) : 0
-
-  const { data: history } = await supabase.from("chat_sessions").select().eq("user_id", userId)
-
-  const { data: session } = await supabase.from("student_courses").select().eq("chat_id", userId)
-  
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {loading ? <LoadingThreeDotsJumping/> :(
       <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <ClientLocalStorageHandler />
         <AnimatedWrapper variant="staggerContainer">
           <AnimatedWrapper variant="fadeInUp">
             <div className="mb-8">
@@ -41,7 +70,7 @@ export default async function DashboardPage({ searchParams }:{searchParams: Prom
           </AnimatedWrapper>
         </AnimatedWrapper>
 
-        {/* Main Tools - Two Sectors */}
+        {/* Main Tools */}
         <AnimatedWrapper variant="staggerContainer">
           <div className="grid lg:grid-cols-3 gap-8 mb-8">
             {/* Timetable Generator */}
@@ -95,7 +124,7 @@ export default async function DashboardPage({ searchParams }:{searchParams: Prom
 
                   <Link href="/timetable-generator">
                     <AnimatedButton className="w-full">
-                      <Button className="w-full cursor-pointer bg-blue-500 hover:bg-blue-700 group-hover:bg-blue-700 transition-colors">
+                      <Button onClick={isLoading} className="w-full cursor-pointer bg-blue-500 hover:bg-blue-700 group-hover:bg-blue-700 transition-colors">
                         {currentStep>=1 ? "Continue Timetable":"Create Timetable"}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -107,117 +136,122 @@ export default async function DashboardPage({ searchParams }:{searchParams: Prom
 
             {/* Course Management */}
             <AnimatedCard>
-              <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-green-100 group hover:shadow-lg transition-all duration-300">
-                <CardHeader>
-                  <div className="flex items-center space-x-3 mb-4">
-                    <AnimatedIcon className="p-3 bg-green-600 rounded-lg">
-                      <GraduationCap className="h-6 w-6 text-white" />
-                    </AnimatedIcon>
-                    <div>
-                      <CardTitle className="text-xl">Course Management</CardTitle>
-                      <CardDescription>Manage carry-over courses and credit limits</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4 mb-6">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Credit Usage</span>
-                      <span className="text-green-600 font-medium">--/-- units</span>
-                    </div>
-                    <AnimatedProgress value={75} className="h-2 text-bg-500" color="green" />
-                    <p className="text-sm text-gray-600">
-                      You have -- credit units remaining. -- carry-over courses available.
-                    </p>
-                  </div>
+  <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-green-100 group hover:shadow-lg transition-all duration-300">
+    <CardHeader>
+      <div className="flex items-center space-x-3 mb-4">
+        <AnimatedIcon className="p-3 bg-green-600 rounded-lg">
+          <GraduationCap className="h-6 w-6 text-white" />
+        </AnimatedIcon>
+        <div>
+          <CardTitle className="text-xl">Course Management</CardTitle>
+          <CardDescription>Manage carry-over courses and credit limits</CardDescription>
+        </div>
+      </div>
+    </CardHeader>
 
-                  <AnimatedWrapper variant="staggerContainer">
-                    <div className="space-y-2 mb-6">
-                      <AnimatedWrapper variant="slideInLeft">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Registered Courses</span>
-                          <Badge variant="secondary">-- courses</Badge>
-                        </div>
-                      </AnimatedWrapper>
-                      <AnimatedWrapper variant="slideInLeft" delay={0.1}>
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Carry-over Courses</span>
-                          <Badge variant="outline" className="text-orange-600 border-orange-200">
-                            -- available
-                          </Badge>
-                        </div>
-                      </AnimatedWrapper>
-                    </div>
-                  </AnimatedWrapper>
+    <CardContent>
+      <div className="space-y-4 mb-6">
+        <div className="flex items-center justify-between text-sm">
+          <span>Credit Usage</span>
+          <span className="text-green-600 font-medium">--/-- units</span>
+        </div>
+        <AnimatedProgress value={75} className="h-2 text-bg-500" color="green" />
+        <p className="text-sm text-gray-600">
+          You have -- credit units remaining. -- carry-over courses available.
+        </p>
+      </div>
 
-                  <Link href="/course-management">
-                    <AnimatedButton className="w-full">
-                      <Button className="w-full bg-green-600 hover:bg-green-700 cursor-pointer group-hover:bg-green-700 transition-colors">
-                        Manage Courses
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </AnimatedButton>
-                  </Link>
-                </CardContent>
-              </Card>
-            </AnimatedCard>
+      <AnimatedWrapper variant="staggerContainer">
+        <div className="space-y-2 mb-6">
+          <AnimatedWrapper variant="slideInLeft">
+            <div className="flex items-center justify-between text-sm">
+              <span>Registered Courses</span>
+              <Badge variant="secondary">-- courses</Badge>
+            </div>
+          </AnimatedWrapper>
+          <AnimatedWrapper variant="slideInLeft" delay={0.1}>
+            <div className="flex items-center justify-between text-sm">
+              <span>Carry-over Courses</span>
+              <Badge variant="outline" className="text-orange-600 border-orange-200">
+                -- available
+              </Badge>
+            </div>
+          </AnimatedWrapper>
+        </div>
+      </AnimatedWrapper>
+
+      <Link href="/course-management">
+        <AnimatedButton className="w-full">
+          <Button onClick={isLoading} className="w-full bg-green-600 hover:bg-green-700 cursor-pointer group-hover:bg-green-700 transition-colors">
+            Manage Courses
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </AnimatedButton>
+      </Link>
+    </CardContent>
+  </Card>
+</AnimatedCard>
 
             {/* Get Courses */}
-            <AnimatedCard>
-              <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 group hover:shadow-lg transition-all duration-300">
-                <CardHeader>
-                  <div className="flex items-center space-x-3 mb-4">
-                    <AnimatedIcon className="p-3 bg-purple-600 rounded-lg">
-                       <BookOpen className="h-6 w-6 text-white" />
-                    </AnimatedIcon>
-                    <div>
-                      <CardTitle className="text-xl">Search Courses</CardTitle>
-                      <CardDescription>Don't know which courses you have for a semester. Come on down and get them </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4 mb-6">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Recorded Universities</span>
-                      <span className="text-purple-600 font-medium">--/--</span>
-                    </div>
-                    <AnimatedProgress value={75} className="h-2 text-bg-500" color="purple" />
-                    <p className="text-sm text-gray-600">
-                      -- Nigerian Universities Recorded with their departments and courses up-to-date.
-                    </p>
-                  </div>
+      <AnimatedCard>
+        <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 group hover:shadow-lg transition-all duration-300">
+          <CardHeader>
+            <div className="flex items-center space-x-3 mb-4">
+              <AnimatedIcon className="p-3 bg-purple-600 rounded-lg">
+                <BookOpen className="h-6 w-6 text-white" />
+              </AnimatedIcon>
+              <div>
+                <CardTitle className="text-xl">Search Courses</CardTitle>
+                <CardDescription>
+                  Don&apos;t know which courses you have for a semester. Come on down and get them
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
 
-                  <AnimatedWrapper variant="staggerContainer">
-                    <div className="space-y-2 mb-6">
-                      <AnimatedWrapper variant="slideInLeft">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Recorded Departments</span>
-                          <Badge variant="secondary">-- Departments</Badge>
-                        </div>
-                      </AnimatedWrapper>
-                      <AnimatedWrapper variant="slideInLeft" delay={0.1}>
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Recorded Courses </span>
-                          <Badge variant="outline" className="text-orange-600 border-orange-200">
-                            -- available
-                          </Badge>
-                        </div>
-                      </AnimatedWrapper>
-                    </div>
-                  </AnimatedWrapper>
+          <CardContent>
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center justify-between text-sm">
+                <span>Recorded Universities</span>
+                <span className="text-purple-600 font-medium">--/--</span>
+              </div>
+              <AnimatedProgress value={75} className="h-2 text-bg-500" color="purple" />
+              <p className="text-sm text-gray-600">
+                -- Nigerian Universities Recorded with their departments and courses up-to-date.
+              </p>
+            </div>
 
-                  <Link href="/courses">
-                    <AnimatedButton className="w-full">
-                      <Button className="w-full bg-purple-500 hover:from-purple-100 hover:to-purple-150 cursor-pointer group-hover:bg-purple-700 transition-colors">
-                        Get Courses
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </AnimatedButton>
-                  </Link>
-                </CardContent>
-              </Card>
-            </AnimatedCard>
+            <AnimatedWrapper variant="staggerContainer">
+              <div className="space-y-2 mb-6">
+                <AnimatedWrapper variant="slideInLeft">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Recorded Departments</span>
+                    <Badge variant="secondary">-- Departments</Badge>
+                  </div>
+                </AnimatedWrapper>
+                <AnimatedWrapper variant="slideInLeft" delay={0.1}>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Recorded Courses</span>
+                    <Badge variant="outline" className="text-orange-600 border-orange-200">
+                      -- available
+                    </Badge>
+                  </div>
+                </AnimatedWrapper>
+              </div>
+            </AnimatedWrapper>
+
+            <Link href="/courses">
+              <AnimatedButton className="w-full">
+                <Button onClick={isLoading} className="w-full bg-purple-500 hover:from-purple-100 hover:to-purple-150 cursor-pointer group-hover:bg-purple-700 transition-colors">
+                  Get Courses
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </AnimatedButton>
+            </Link>
+          </CardContent>
+        </Card>
+      </AnimatedCard>
+
           </div>
         </AnimatedWrapper>
 
@@ -272,7 +306,7 @@ export default async function DashboardPage({ searchParams }:{searchParams: Prom
           </div>
         </AnimatedWrapper>
 
-        {/* Recent Activity */}
+        {/* Recent Chats */}
         <AnimatedWrapper variant="fadeInUp" delay={0.8}>
           <Card className="hover:shadow-md transition-shadow duration-300">
             <CardHeader>
@@ -282,17 +316,20 @@ export default async function DashboardPage({ searchParams }:{searchParams: Prom
             <CardContent>
               <AnimatedWrapper variant="staggerContainer">
                 <div className="space-y-4">
-                  {history?.map((chat, index) => (
+                  {history?.slice(0, 5).map((chat, index) => (
                     <AnimatedWrapper key={index} variant="slideInLeft" delay={index * 0.1}>
-                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer group">
-                        <Link href={`/chat/${chat.id}`} className="flex-1">
+                      <Link
+                        href={`/chat/${chat.id}`}
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer group"
+                      >
+                        <div className="flex-1">
                           <h4 className="font-medium text-sm group-hover:text-blue-600 transition-colors">
                             {chat.title}
                           </h4>
                           <p className="text-xs text-gray-600">{new Date(chat.created_at).toLocaleDateString()}</p>
-                        </Link>
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
+                      </Link>
                     </AnimatedWrapper>
                   ))}
                 </div>
@@ -301,17 +338,7 @@ export default async function DashboardPage({ searchParams }:{searchParams: Prom
           </Card>
         </AnimatedWrapper>
       </div>
+      )}
     </div>
   )
 }
-
-
-//progress bar based on what is in local storage
-//Number of chats and timetables
-//arrange the chats and timetable to be most recents(5 max to be shown)
-//link clerk to supabase auth 
-//Add Department and level for adding courses
-//Use collection of courses to create possible list of courses based on department and level 
-//Logic is if course appears more than 3 in courses for timetable then it will appear to the list 
-//List of Courses for each department 
-//

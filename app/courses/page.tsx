@@ -9,6 +9,7 @@ import { ArrowLeft, Search, Filter, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/supabaseClient"
+import LoadingThreeDotsJumping from "@/components/animations/loading"
 
 interface Course {
   name: string
@@ -28,6 +29,10 @@ export default function CourseSelectionPage() {
   const [filterDepartment, setFilterDepartment] = useState("All departments")
   const [courses, setCourses] = useState<Course[]>([])
   let steps = ""
+  const [loading,setLoading] = useState<Boolean>(false)
+  function isLoading(){
+      setLoading(true)
+    }
 
 useEffect(() => {
   const fetchCourses = async () => {
@@ -87,10 +92,12 @@ const filteredCourses = courses.filter((course) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
+      {loading ? <LoadingThreeDotsJumping/>:(
+        <div>
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href={`/dashboard?step=${steps}`}>
-            <Button variant="ghost" size="sm">
+        <Link href={`/dashboard`}>
+            <Button onClick={isLoading} variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
@@ -220,6 +227,8 @@ const filteredCourses = courses.filter((course) => {
           </div>
         </div>
       </div>
+       </div>
+      )}
     </div>
   )
 }

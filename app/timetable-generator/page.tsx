@@ -267,7 +267,7 @@ export default function TimetableGeneratorPage() {
       >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href={`/dashboard?step=${stepdata}`}>
+            <Link href={`/dashboard`}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button onClick={isLoading} variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
