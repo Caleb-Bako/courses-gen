@@ -79,7 +79,7 @@ const bounceIn = {
 export default function TimetableGeneratorPage() {
   const { userId } = useAuth()
   const router = useRouter()
-  let stepdata = ""
+
   const [currentStep, setCurrentStep] = useState(1)
   const [schedule, setSchedule] = useState<Course[]>([])
   const [storedID, setStored] = useState<string>("")
@@ -178,15 +178,10 @@ export default function TimetableGeneratorPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("session")
-    const savedStep = localStorage.getItem("steps-data")
     if (saved) {
       const { chatId, sessionId } = JSON.parse(saved)
       setStored(sessionId)
     }
-    if (savedStep) {
-        const{step} = JSON.parse(savedStep);
-        stepdata = step;
-      }
   }, [])
 
   function handleCategoryChange(category: Course["category"]) {
@@ -832,7 +827,7 @@ export default function TimetableGeneratorPage() {
               Previous Step
             </Button>
           </motion.div>
-          <div className="text-sm text-gray-500">Step {currentStep} of 3</div>
+          <div className="text-sm text-gray-500">{currentStep} of 3</div>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button onClick={() => setCurrentStep(Math.min(3, currentStep + 1))} disabled={currentStep === 3}>
               Next Step

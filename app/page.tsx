@@ -66,7 +66,7 @@ export default function Home() {
             study schedule based on course intensity and learning patterns.
           </motion.p>
 
-          <motion.div className="flex justify-center space-x-4" variants={fadeInUp}>
+          <motion.div className="flex flex-col gap-6 md:flex-row justify-center space-x-4" variants={fadeInUp}>
             <Link href="/dashboard">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button 
@@ -76,7 +76,7 @@ export default function Home() {
                 </Button>
               </motion.div>
             </Link>
-            <Link href="/demo">
+            <Link href="/">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button variant="outline" size="lg" className="px-8 py-3 bg-transparent">
                   View Documentation
