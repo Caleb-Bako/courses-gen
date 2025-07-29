@@ -339,6 +339,7 @@ export default function TimetableChatPage() {
     ]
 
     if (matches.length > 0) {
+      setLoader(true)
       const updates: Record<Weekday, { Day: string; Course: string; Start: string; End: string }[]> = {
         Sunday: [],
         Monday: [],
@@ -382,8 +383,6 @@ export default function TimetableChatPage() {
       {/* Header */}
       {loader ? <LoadingThreeDotsJumping/>:(
         <div>
-
-        
       <motion.header
         className="bg-white border-b"
         initial={{ opacity: 0, y: -20 }}
