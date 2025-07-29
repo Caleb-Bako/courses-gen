@@ -19,7 +19,7 @@ function LoadingThreeDotsJumping() {
         <motion.div
             animate="jump"
             transition={{ staggerChildren: -0.2, staggerDirection: -1 }}
-            className="container"
+            className="container h-screen bg-grey-500 opacity-50"
         >
             <motion.div className="dot" variants={dotVariants} />
             <motion.div className="dot" variants={dotVariants} />
@@ -47,7 +47,7 @@ function StyleSheet() {
                 width: 20px;
                 height: 20px;
                 border-radius: 50%;
-                background-color: #ff0088;
+                background-color: #2555f5ff;
                 will-change: transform;
             }
             `}

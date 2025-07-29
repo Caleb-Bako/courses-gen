@@ -5,6 +5,8 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Calendar, MessageSquare, Clock, Brain, ArrowRight, GraduationCap } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { useState } from "react"
+import LoadingThreeDotsJumping from "@/components/animations/loading"
 
 // Animation variants
 const fadeInUp = {
@@ -34,9 +36,16 @@ const scaleIn = {
 }
 
 export default function Home() {
+  const [loading,setLoading] = useState<Boolean>(false)
+
+  function isLoading(){
+    setLoading(true)
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Hero Section */}
+      {loading ? <LoadingThreeDotsJumping/>:(
+      <div>
       <section className="container mx-auto px-4 py-20 text-center">
         <motion.div className="max-w-4xl mx-auto" initial="initial" animate="animate" variants={staggerContainer}>
           <motion.h1 className="text-5xl font-bold text-gray-900 mb-6" variants={fadeInUp}>
@@ -60,7 +69,9 @@ export default function Home() {
           <motion.div className="flex justify-center space-x-4" variants={fadeInUp}>
             <Link href="/dashboard?step=0">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button size="lg" className="px-8 py-3">
+                <Button 
+                onClick={isLoading}
+                size="lg" className="px-8 py-3">
                   Start Demo Now
                 </Button>
               </motion.div>
@@ -146,7 +157,9 @@ export default function Home() {
 
               <Link href="/timetable-generator" className="block">
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button className="w-full group-hover:bg-blue-700 transition-colors" size="lg">
+                  <Button 
+                  onClick={isLoading}
+                  className="w-full group-hover:bg-blue-700 transition-colors" size="lg">
                     Create Timetable
                     <motion.div
                       className="ml-2"
@@ -206,6 +219,7 @@ export default function Home() {
               <Link href="/course-management" className="block">
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button
+                    onClick={isLoading}
                     className="w-full bg-green-600 hover:bg-green-700 group-hover:bg-green-700 transition-colors"
                     size="lg"
                   >
@@ -312,7 +326,9 @@ export default function Home() {
           >
             <Link href="/dashboard">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button size="lg" variant="secondary" className="px-8 py-3">
+                <Button 
+                  onClick={isLoading}
+                  size="lg" variant="secondary" className="px-8 py-3">
                   Get Started Free
                 </Button>
               </motion.div>
@@ -342,6 +358,8 @@ export default function Home() {
           <p className="text-gray-400">© 2024 StudyPlan AI. All rights reserved.</p>
         </div>
       </motion.footer>
+      </div>
+    )}
     </div>
   )
 }

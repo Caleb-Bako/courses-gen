@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/supabaseClient"
 import { motion, AnimatePresence } from "framer-motion"
+import LoadingThreeDotsJumping from "@/components/animations/loading"
 
 type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday"
 
@@ -109,7 +110,6 @@ export default function TimetableResultPage() {
     const saved = localStorage.getItem("Table")
     if (saved) {
       const { tableId } = JSON.parse(saved)
-      console.log("Table ID Gotten:", tableId)
       getTimeTable(tableId)
     }
   }, [])
@@ -127,7 +127,6 @@ export default function TimetableResultPage() {
 
       setTimeTable([{ schedule: entry.schedule }])
       setPriorityGrouped(entry.Priority_Grouped as Record<Weekday, Course[]>)
-      console.log("✅ Fetched TimeTable and Priority_Grouped:", entry)
 
       // Trigger celebration animation
       setTimeout(() => setShowCelebration(true), 500)
@@ -190,9 +189,15 @@ export default function TimetableResultPage() {
     }
   }
 
+  function isLoadingAnimation(){
+    setIsLoading(true)
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
+      {isLoading ? <LoadingThreeDotsJumping/> :(
+        <div>
+
       <motion.header
         className="bg-white border-b"
         initial={{ opacity: 0, y: -20 }}
@@ -203,7 +208,7 @@ export default function TimetableResultPage() {
           <div className="flex items-center space-x-4">
             <Link href="/timetable-generator">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="ghost" size="sm">
+                <Button onClick={isLoadingAnimation} variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Generator
                 </Button>
@@ -479,6 +484,8 @@ export default function TimetableResultPage() {
           </div>
         </motion.div>
       </div>
+      </div>
+      )}
     </div>
   )
 }

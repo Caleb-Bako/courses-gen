@@ -21,6 +21,7 @@ import { useAuth } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import LoadingThreeDotsJumping from "@/components/animations/loading"
 
 const courseSchema = z.object({
   name: z.string().min(1, "Course name is required"),
@@ -125,6 +126,12 @@ export default function TimetableGeneratorPage() {
     { id: 3, title: "Generate Timetable", description: "Create your optimized schedule", completed: false },
   ]
 
+  const [loading,setLoading] = useState<Boolean>(false)
+
+  function isLoading(){
+    setLoading(true)
+  }
+
   // Animate progress bar when step changes
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -173,7 +180,6 @@ export default function TimetableGeneratorPage() {
     const savedStep = localStorage.getItem("steps-data")
     if (saved) {
       const { chatId, sessionId } = JSON.parse(saved)
-      console.log("ID Gotten:", chatId, sessionId)
       setStored(sessionId)
     }
     if (savedStep) {
@@ -222,11 +228,10 @@ export default function TimetableGeneratorPage() {
     setStored(emptyValue)
     setOpen(false)
     handleScheduleDay(emptyValue)
-    console.log("Info", storedID)
   }
 
   async function handleScheduleDay(response: string) {
-    console.log(`Starting AI conversation for Student with:`)
+    console.log(`Starting AI conversation for Student`)
       const stepData = {
        step:2
       }
@@ -251,6 +256,8 @@ export default function TimetableGeneratorPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
+      {loading ? <LoadingThreeDotsJumping/> :(
+        <div>
       <motion.header
         className="bg-white border-b"
         initial={{ opacity: 0, y: -20 }}
@@ -261,7 +268,7 @@ export default function TimetableGeneratorPage() {
           <div className="flex items-center justify-between">
             <Link href={`/dashboard?step=${stepdata}`}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="ghost" size="sm">
+                <Button onClick={isLoading} variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Dashboard
                 </Button>
@@ -846,6 +853,8 @@ export default function TimetableGeneratorPage() {
           </motion.div>
         </motion.div>
       </div>
+      </div>
+    )}
     </div>
   )
 }

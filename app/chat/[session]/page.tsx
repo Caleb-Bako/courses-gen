@@ -14,6 +14,7 @@ import { useAuth } from "@clerk/nextjs"
 import { useParams, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
+import LoadingThreeDotsJumping from "@/components/animations/loading"
 
 type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday"
 
@@ -62,6 +63,7 @@ export default function TimetableChatPage() {
   const initialized = useRef(false)
   const params = useParams<{ session: string }>()
   const router = useRouter()
+  const[loader,setLoader] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [input, setInput] = useState<string>("")
   const [messageList, setMessageList] = useState<messages[]>([])
@@ -92,6 +94,9 @@ export default function TimetableChatPage() {
 
   const [chatHistory, setChatHistory] = useState<History[]>([])
 
+  function setLoadingAnimation(){
+    setLoader(true)
+  }
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -107,7 +112,6 @@ export default function TimetableChatPage() {
 
       const init = async () => {
         const saved = localStorage.getItem("ai-chat-data")
-        console.log("Transfered Courses", saved)
         retrieveChatHistory(userId)
         //if params(session.id) exist then retrieve old messsages
         if (params.session.includes("new")) {
@@ -115,8 +119,6 @@ export default function TimetableChatPage() {
             const { priorityGrouped, grouped } = JSON.parse(saved)
             setPriorityGrouped(priorityGrouped)
             setGrouped(grouped)
-
-            console.log("Courses ", priorityGrouped)
           }
           // setPriorityGrouped(priorityGrouped);
           // setGrouped(grouped);
@@ -131,7 +133,6 @@ export default function TimetableChatPage() {
             .single()
 
           setTableId(history?.table)
-          console.log("Table Set", history?.table)
 
           const { data: oldMessages } = await supabase
             .from("chat_messages")
@@ -139,7 +140,6 @@ export default function TimetableChatPage() {
             .eq("chat_id", params.session)
             .order("created_at", { ascending: true })
 
-          console.log("Message gotten", oldMessages)
 
           if (oldMessages) {
             console.log("Message found")
@@ -166,7 +166,6 @@ export default function TimetableChatPage() {
         sessionId,
         userId,
       }
-      console.log("User pressed the back button!", chatData)
       localStorage.setItem("session", JSON.stringify(chatData))
     } else {
       localStorage.removeItem("session")
@@ -179,7 +178,6 @@ export default function TimetableChatPage() {
     if (history) {
       setChatHistory(history)
     }
-    console.log("History", chatHistory, "User", id)
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -239,8 +237,6 @@ export default function TimetableChatPage() {
           .single()
   
         setSessionId(sess?.id)
-        console.log("DONE", session)
-  
         setTableId(session?.id)
         //1
         const userMsg = { content: input, role: "user", type: "text" }
@@ -290,8 +286,6 @@ export default function TimetableChatPage() {
       const res = await fetch(`../api/check-run-status?runId=${runId}`)
       const data = await res.json()
       if (data.status === "Completed") {
-        console.log("✅ AI Response:", data.output.output[0])
-
         setShowTyping(false) // Hide typing indicator
 
         // use it in UI
@@ -367,8 +361,6 @@ export default function TimetableChatPage() {
 
       await supabase.from("student_courses").update({ schedule: updates }).eq("id", tableId)
 
-      console.log("✅ Stored all time blocks:", updates)
-
       const stepData = {
        step:3
       }
@@ -388,6 +380,10 @@ export default function TimetableChatPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
+      {loader ? <LoadingThreeDotsJumping/>:(
+        <div>
+
+        
       <motion.header
         className="bg-white border-b"
         initial={{ opacity: 0, y: -20 }}
@@ -398,7 +394,7 @@ export default function TimetableChatPage() {
           <div className="flex items-center space-x-4">
             <Link href="/timetable-generator">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="ghost" size="sm">
+                <Button onClick={setLoadingAnimation} variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Generator
                 </Button>
@@ -636,6 +632,8 @@ export default function TimetableChatPage() {
           </motion.div>
         </div>
       </div>
+      </div>
+      )}
     </div>
   )
 }
