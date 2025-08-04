@@ -65,6 +65,7 @@ export default function TimetableChatPage() {
   const router = useRouter()
   const[loader,setLoader] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const[loading,setLoading] = useState<boolean>(false)
   const [input, setInput] = useState<string>("")
   const [messageList, setMessageList] = useState<messages[]>([])
   const [sessionId, setSessionId] = useState<string>("")
@@ -120,15 +121,15 @@ export default function TimetableChatPage() {
             setPriorityGrouped(priorityGrouped)
             setGrouped(grouped)
           }
-          // setPriorityGrouped(priorityGrouped);
-          // setGrouped(grouped);
         } else {
+          setLoading(true);
           setSessionId(params.session)
-
+          //Loading State false
           const { data: history } = await supabase
             .from("chat_sessions")
             .select("title")
             .eq("id", params.session)
+            .eq("user_id",userId)
             .select()
             .single()
 
@@ -150,7 +151,7 @@ export default function TimetableChatPage() {
               })),
             )
           }
-          //create session
+          setLoading(false);
         }
 
         localStorage.removeItem("ai-chat-data")
@@ -180,12 +181,13 @@ export default function TimetableChatPage() {
     }
   }
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: FormEvent, overrideText?: string) => {
+    if (e) e.preventDefault();
     // if (!chatId) return;
+    const text = overrideText ?? input;
     if(sessionId){
       console.log("Old Session")
-      const userMsg = { content: input, role: "user", type: "text" }
+      const userMsg = { content: text, role: "user", type: "text" }
       setMessageList((prev) => [...prev, userMsg])
       setInput("")
       setIsLoading(true)
@@ -193,7 +195,7 @@ export default function TimetableChatPage() {
       await supabase.from("chat_messages").insert({
         chat_id: sessionId,
         role: "user",
-        content: input,
+        content: text,
       })
 
       // 2. Send to backend AI API
@@ -239,7 +241,7 @@ export default function TimetableChatPage() {
         setSessionId(sess?.id)
         setTableId(session?.id)
         //1
-        const userMsg = { content: input, role: "user", type: "text" }
+        const userMsg = { content: text, role: "user", type: "text" }
         setMessageList((prev) => [...prev, userMsg])
         setInput("")
         setIsLoading(true)
@@ -249,7 +251,7 @@ export default function TimetableChatPage() {
         await supabase.from("chat_messages").insert({
           chat_id: sess?.id,
           role: "user",
-          content: input,
+          content: text,
         })
   
         // 2. Send to backend AI API
@@ -368,6 +370,7 @@ export default function TimetableChatPage() {
        localStorage.setItem("steps-data", JSON.stringify(stepData))
       const chatData = {
         tableId,
+        sessionId
       }
       localStorage.setItem("Table", JSON.stringify(chatData))
       router.push("/timetable-generator/result")
@@ -376,6 +379,12 @@ export default function TimetableChatPage() {
       toast("❌ No time block found.")
       console.log("❌ No time block found.")
     }
+  }
+
+  function sendPrompt(text:string){
+    console.log(text)
+    setInput(text);
+    handleSubmit(undefined, text);
   }
 
   return (
@@ -472,114 +481,152 @@ export default function TimetableChatPage() {
                   </div>
                 </div>
               </CardHeader>
-
               {/* Messages */}
               <CardContent className="flex-1 p-0">
                 <ScrollArea className="h-[calc(100vh-350px)] p-4">
-                  <div className="space-y-4">
-                    <AnimatePresence>
-                      {messageList.map((message, index) => (
-                        <motion.div
-                          key={index}
-                          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                          variants={message.role === "user" ? slideInRight : slideInLeft}
-                          initial="initial"
-                          animate="animate"
-                          exit="exit"
-                          transition={{ duration: 0.4, delay: index * 0.1 }}
-                        >
-                          <div
-                            className={`flex space-x-3 max-w-[85%] ${
-                              message.role === "user" ? "flex-row-reverse space-x-reverse" : ""
-                            }`}
-                          >
-                            <motion.div
-                              className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
-                              }`}
-                              whileHover={{ scale: 1.1 }}
-                              animate={
-                                message.role === "assistant" ? { rotate: [0, 10, -10, 0] } : { scale: [1, 1.05, 1] }
-                              }
-                              transition={{
-                                rotate: { repeat: Number.POSITIVE_INFINITY, duration: 4 },
-                                scale: { repeat: Number.POSITIVE_INFINITY, duration: 2 },
-                              }}
+                  {loading ? 
+                  <div className="mx-30">
+                    <LoadingThreeDotsJumping/>
+                  </div>
+                  :(
+                    <div>
+                      {messageList.length <= 0 ? 
+                        <div className="flex flex-col items-center text-center gap-10">
+                          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+                            📚 What do you need help with today?
+                          </h2>
+                          <p className="text-muted-foreground max-w-md">
+                            Choose the type of study plan you want. I’ll tailor your schedule with biblical encouragement and smart planning.
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-xl">
+                            <Button
+                              className="py-6 text-md shadow-md"
+                              onClick={() => sendPrompt("Generate Personalized Study TimeTable")}
                             >
-                              {message.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                            </motion.div>
-                            <motion.div
-                              className={`rounded-lg p-3 ${
-                                message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900"
-                              }`}
-                              whileHover={{ scale: 1.02 }}
-                              transition={{ type: "spring", stiffness: 300 }}
+                              🗓️ Generate Class Study Timetable
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="py-6 text-md shadow-md border-dashed"
+                              onClick={() => sendPrompt("Generate Personalized Exam Study TimeTable")}
                             >
-                              <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                                <Markdown>{message.content}</Markdown>
-                              </div>
+                              📖 Generate Exam Study Timetable
+                            </Button>
+                          </div>
+                        </div>
+
+                      :(
+                      <div className="space-y-4">
+                        <AnimatePresence>
+                          {messageList.map((message, index) => (
+                            <motion.div
+                              key={index}
+                              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                              variants={message.role === "user" ? slideInRight : slideInLeft}
+                              initial="initial"
+                              animate="animate"
+                              exit="exit"
+                              transition={{ duration: 0.4, delay: index * 0.1 }}
+                            >
                               <div
-                                className={`text-xs mt-2 ${
-                                  message.role === "user" ? "text-blue-100" : "text-gray-500"
+                                className={`flex space-x-3 max-w-[85%] ${
+                                  message.role === "user" ? "flex-row-reverse space-x-reverse" : ""
                                 }`}
                               >
-                                {/* {msg.time} */}
+                                <motion.div
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                    message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+                                  }`}
+                                  whileHover={{ scale: 1.1 }}
+                                  animate={
+                                    message.role === "assistant" ? { rotate: [0, 10, -10, 0] } : { scale: [1, 1.05, 1] }
+                                  }
+                                  transition={{
+                                    rotate: { repeat: Number.POSITIVE_INFINITY, duration: 4 },
+                                    scale: { repeat: Number.POSITIVE_INFINITY, duration: 2 },
+                                  }}
+                                >
+                                  {message.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                                </motion.div>
+                                <motion.div
+                                  className={`rounded-lg p-3 ${
+                                    message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900"
+                                  }`}
+                                  whileHover={{ scale: 1.02 }}
+                                  transition={{ type: "spring", stiffness: 300 }}
+                                >
+                                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                                    <Markdown>{message.content}</Markdown>
+                                  </div>
+                                  <div
+                                    className={`text-xs mt-2 ${
+                                      message.role === "user" ? "text-blue-100" : "text-gray-500"
+                                    }`}
+                                  >
+                                    {/* {msg.time} */}
+                                  </div>
+                                </motion.div>
                               </div>
                             </motion.div>
-                          </div>
-                        </motion.div>
-                      ))}
+                          ))}
 
-                      {/* Typing Indicator */}
-                      {showTyping && (
-                        <motion.div
-                          className="flex justify-start"
-                          variants={slideInLeft}
-                          initial="initial"
-                          animate="animate"
-                          exit="exit"
-                        >
-                          <div className="flex space-x-3 max-w-[85%]">
+                          {/* Typing Indicator */}
+                          {showTyping && (
                             <motion.div
-                              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200 text-gray-600"
-                              animate={{ scale: [1, 1.2, 1] }}
-                              transition={{
-                                duration: 1,
-                                repeat: Number.POSITIVE_INFINITY,
-                                ease: "easeInOut",
-                              }}
+                              className="flex justify-start"
+                              variants={slideInLeft}
+                              initial="initial"
+                              animate="animate"
+                              exit="exit"
                             >
-                              <Bot className="h-4 w-4" />
-                            </motion.div>
-                            <div className="rounded-lg p-3 bg-gray-100 text-gray-900">
-                              <div className="flex space-x-1">
+                              <div className="flex space-x-3 max-w-[85%]">
                                 <motion.div
-                                  className="w-2 h-2 bg-gray-400 rounded-full"
-                                  animate={{ y: [0, -5, 0] }}
-                                  transition={{ repeat: Number.POSITIVE_INFINITY, duration: 0.6, delay: 0 }}
-                                />
-                                <motion.div
-                                  className="w-2 h-2 bg-gray-400 rounded-full"
-                                  animate={{ y: [0, -5, 0] }}
-                                  transition={{ repeat: Number.POSITIVE_INFINITY, duration: 0.6, delay: 0.2 }}
-                                />
-                                <motion.div
-                                  className="w-2 h-2 bg-gray-400 rounded-full"
-                                  animate={{ y: [0, -5, 0] }}
-                                  transition={{ repeat: Number.POSITIVE_INFINITY, duration: 0.6, delay: 0.4 }}
-                                />
+                                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200 text-gray-600"
+                                  animate={{ scale: [1, 1.2, 1] }}
+                                  transition={{
+                                    duration: 1,
+                                    repeat: Number.POSITIVE_INFINITY,
+                                    ease: "easeInOut",
+                                  }}
+                                >
+                                  <Bot className="h-4 w-4" />
+                                </motion.div>
+                                <div className="rounded-lg p-3 bg-gray-100 text-gray-900">
+                                  <div className="flex space-x-1">
+                                    <motion.div
+                                      className="w-2 h-2 bg-gray-400 rounded-full"
+                                      animate={{ y: [0, -5, 0] }}
+                                      transition={{ repeat: Number.POSITIVE_INFINITY, duration: 0.6, delay: 0 }}
+                                    />
+                                    <motion.div
+                                      className="w-2 h-2 bg-gray-400 rounded-full"
+                                      animate={{ y: [0, -5, 0] }}
+                                      transition={{ repeat: Number.POSITIVE_INFINITY, duration: 0.6, delay: 0.2 }}
+                                    />
+                                    <motion.div
+                                      className="w-2 h-2 bg-gray-400 rounded-full"
+                                      animate={{ y: [0, -5, 0] }}
+                                      transition={{ repeat: Number.POSITIVE_INFINITY, duration: 0.6, delay: 0.4 }}
+                                    />
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        </motion.div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                        <div ref={messagesEndRef} />
+                      </div>
                       )}
-                    </AnimatePresence>
-                    <div ref={messagesEndRef} />
-                  </div>
+
+                    </div>
+                  )}
                 </ScrollArea>
               </CardContent>
 
+
               {/* Message Input */}
+              {messageList.length > 0 &&(
+                <div>
               <motion.form
                 onSubmit={handleSubmit}
                 className="bg-white border-t p-4"
@@ -596,6 +643,7 @@ export default function TimetableChatPage() {
                       className="flex-1"
                       disabled={isLoading}
                     />
+
                   </motion.div>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button disabled={isLoading || input.trim() === ""}>
@@ -627,6 +675,9 @@ export default function TimetableChatPage() {
                         Generate Timetable
                       </Button>
                     </motion.div>
+
+                </div>
+              )}
             </Card>
           </motion.div>
         </div>

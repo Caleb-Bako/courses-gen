@@ -216,7 +216,7 @@ export default function Home() {
                 ))}
               </motion.div>
 
-              <Link href="/course-management" className="block">
+              <Link href="/courses-management" className="block">
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button
                     onClick={isLoading}

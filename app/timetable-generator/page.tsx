@@ -12,6 +12,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 import { Calendar, ArrowLeft, ArrowRight, CheckCircle2, MessageSquare, PlusCircle } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -23,16 +30,18 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import LoadingThreeDotsJumping from "@/components/animations/loading"
 import { UniversityCombobox } from "@/components/UniComboBox"
+import { cn } from "@/lib/utils"
 
 const courseSchema = z.object({
   name: z.string().min(1, "Course name is required"),
   day: z.enum(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]),
-  time: z.string().optional(),
+  time: z.string().min(1, "Semester is required"),
   category: z.enum(["calculation", "coding", "theory"]),
   intensity: z.enum(["hard", "easy", "mid", "hard-to-grasp", "bulky", "both-hard-bulky"]),
-  University: z.string().optional(),
-  Level: z.string().optional(),
-  Department: z.string().optional(),
+  University: z.string().min(1,"University Required"),
+  Level: z.string().min(1,"Level Required"),
+  Department: z.string().min(1,"Department Required"),
+  title:z.string(),
 })
 
 type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday"
@@ -63,19 +72,6 @@ const scaleIn = {
   animate: { opacity: 1, scale: 1 },
 }
 
-const bounceIn = {
-  initial: { opacity: 0, scale: 0.3 },
-  animate: {
-    opacity: 1,
-    scale: 1,
-  },
-  transition: {
-    type: "spring",
-    stiffness: 300,
-    damping: 20,
-  },
-}
-
 export default function TimetableGeneratorPage() {
   const { userId } = useAuth()
   const router = useRouter()
@@ -93,7 +89,8 @@ export default function TimetableGeneratorPage() {
     intensity: "mid",
     University: "",
     Level: "",
-    Department:""
+    Department:"",
+    title:""
   })
   const [grouped, setGrouped] = useState<Record<Weekday, Course[]>>({
     Monday: [],
@@ -127,7 +124,8 @@ export default function TimetableGeneratorPage() {
     { id: 3, title: "Generate Timetable", description: "Create your optimized schedule", completed: false },
   ]
 
-  const [loading,setLoading] = useState<Boolean>(false)
+  const [loading,setLoading] = useState<Boolean>(false);
+  const isEmpty = Object.values(priorityGrouped).every((courses) => courses.length === 0);
 
   function isLoading(){
     setLoading(true)
@@ -199,11 +197,15 @@ export default function TimetableGeneratorPage() {
   function handleAdd() {
     setSchedule([...schedule, form])
     setForm({
+      University:form.University,
       name: "",
       day: "Monday",
-      time: "",
+      time: form.time,
       category: "calculation",
       intensity: "mid",
+      Level:form.Level,
+      Department:form.Department,
+      title:""
     })
     const stepData = {
        step:1
@@ -526,6 +528,14 @@ export default function TimetableGeneratorPage() {
                           </Select>
                         </motion.div>
                       </motion.div>
+                       <motion.div variants={scaleIn}>
+                          <Input
+                            placeholder="Title e.g Introduction to Computer Hardware"
+                            value={form.title}
+                            onChange={(e) => setForm({ ...form, title: e.target.value })}
+                            className="w-full"
+                          />
+                        </motion.div>
 
                       <motion.div
                         className="grid grid-cols-3 gap-4 w-full"
@@ -701,12 +711,32 @@ export default function TimetableGeneratorPage() {
                         ))}
                       </div>
                     </motion.div>
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button size="lg" onClick={resume}>
-                        Start AI Chat
-                        <MessageSquare className="ml-2 h-4 w-4" />
-                      </Button>
-                    </motion.div>
+                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div>
+                                <Button
+                                  disabled={isEmpty}
+                                  size="lg"
+                                  onClick={resume}
+                                  className={cn(
+                                    isEmpty && "bg-gray-300 text-gray-600 cursor-not-allowed hover:bg-gray-300"
+                                  )}
+                                >
+                                  Start AI Chat
+                                  <MessageSquare className="ml-2 h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TooltipTrigger>
+                            {isEmpty && (
+                              <TooltipContent>
+                                <p>Add at least one course to resume.</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
+                      </motion.div>
                   </motion.div>
                 </CardContent>
               </Card>

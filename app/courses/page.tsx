@@ -72,21 +72,30 @@ useEffect(() => {
 }, [])
 
 
+// First: count how many times each course name appears
+const nameCountMap = new Map<string, number>();
+courses.forEach((course) => {
+  nameCountMap.set(course.name, (nameCountMap.get(course.name) || 0) + 1);
+});
+
+// Then: filter courses based on existing filters *and* if they appear more than once
 const filteredCourses = courses.filter((course) => {
-  const matchSearch = course.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const matchSearch = course.name.toLowerCase().includes(searchTerm.toLowerCase());
 
   const matchUniversity =
-    filterUniversity === "All universities" || course.University === filterUniversity
+    filterUniversity === "All universities" || course.University === filterUniversity;
 
   const matchLevel =
-    filterLevel === "All levels" || course.Level === filterLevel
+    filterLevel === "All levels" || course.Level === filterLevel;
 
   const matchDepartment =
-    filterDepartment === "All departments" || course.Department === filterDepartment
+    filterDepartment === "All departments" || course.Department === filterDepartment;
 
-  return matchSearch && matchUniversity && matchLevel && matchDepartment
+  const isDuplicate = nameCountMap.get(course.name)! > 1;
 
-})
+  return matchSearch && matchUniversity && matchLevel && matchDepartment && isDuplicate;
+});
+
 
 
   return (

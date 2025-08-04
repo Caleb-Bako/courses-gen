@@ -90,9 +90,10 @@ const courseCard = {
 }
 
 export default function TimetableResultPage() {
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [timeTable, setTimeTable] = useState<Table[]>([])
-  const [showCelebration, setShowCelebration] = useState(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [timeTable, setTimeTable] = useState<Table[]>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [sessionId, setSessionId] = useState<string>("");
   const [priorityGrouped, setPriorityGrouped] = useState<Record<Weekday, Course[]>>({
     Monday: [],
     Tuesday: [],
@@ -101,15 +102,16 @@ export default function TimetableResultPage() {
     Friday: [],
     Saturday: [],
     Sunday: [],
-  })
+  });
 
-  const days: Weekday[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+  const days: Weekday[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   //Getting data
   useEffect(() => {
     const saved = localStorage.getItem("Table")
     if (saved) {
-      const { tableId } = JSON.parse(saved)
+      const { tableId,sessionId } = JSON.parse(saved)
+      setSessionId(sessionId);
       getTimeTable(tableId)
     }
   }, [])
@@ -454,7 +456,7 @@ export default function TimetableResultPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9, duration: 0.5 }}
         >
-          <Link href="/timetable-generator/chat">
+          <Link href={`/chat/${sessionId}`}>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button variant="outline">
                 <motion.div
