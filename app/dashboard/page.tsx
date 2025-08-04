@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, BookOpen, MessageSquare, Clock, ArrowRight, GraduationCap } from "lucide-react"
 import Link from "next/link"
-import { supabase } from "@/supabaseClient"
 import { useUser } from "@clerk/nextjs"
 import {
   AnimatedWrapper,
@@ -16,6 +15,7 @@ import {
 } from "@/components/animations/dashboardanimation"
 import { Badge } from "@/components/ui/badge"
 import LoadingThreeDotsJumping from "@/components/animations/loading"
+import { supabase } from "@/supabaseClient"
 
 export default function DashboardPage() {
   const { user } = useUser()
@@ -350,4 +350,4 @@ export default function DashboardPage() {
 //Loading function accepting colors
 //NavBar
 //Title Creation for chats
-//Supabase and Clerk Auth 
+//Supabase and Clerk Auth --> Read on Supabase RLS

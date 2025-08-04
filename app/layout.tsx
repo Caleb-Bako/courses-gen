@@ -45,12 +45,6 @@ export default function RootLayout({
                 <span className="text-2xl font-bold text-gray-900">StudyPlan AI</span>
               </div>
               <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="sm">
-                  <Bell className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Settings className="h-4 w-4" />
-                </Button>
                 <SignedOut>
                   <SignInButton />
                   <SignUpButton>

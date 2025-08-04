@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Search, Filter, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { supabase } from "@/supabaseClient"
 import LoadingThreeDotsJumping from "@/components/animations/loading"
+import { supabase } from "@/supabaseClient"
 
 interface Course {
   name: string

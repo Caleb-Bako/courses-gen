@@ -6,9 +6,9 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, ArrowLeft, Download, Clock, BookOpen, CheckCircle2, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { supabase } from "@/supabaseClient"
 import { motion, AnimatePresence } from "framer-motion"
 import LoadingThreeDotsJumping from "@/components/animations/loading"
+import { supabase } from "@/supabaseClient"
 
 type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday"
 
