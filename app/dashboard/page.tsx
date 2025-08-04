@@ -323,7 +323,7 @@ export default function DashboardPage() {
                         href={`/chat/${chat.id}`}
                         className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer group"
                       >
-                        <div className="flex-1">
+                        <div className="flex-1" onClick={isLoading}>
                           <h4 className="font-medium text-sm group-hover:text-blue-600 transition-colors">
                             {chat.title}
                           </h4>
@@ -348,3 +348,6 @@ export default function DashboardPage() {
 //COURSES LIST OF UNI
 //Whats the pitch...whats the selling idea..what is it trying to achieve
 //Loading function accepting colors
+//NavBar
+//Title Creation for chats
+//Supabase and Clerk Auth 

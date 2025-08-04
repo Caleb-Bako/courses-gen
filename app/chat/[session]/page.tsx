@@ -485,13 +485,13 @@ export default function TimetableChatPage() {
               <CardContent className="flex-1 p-0">
                 <ScrollArea className="h-[calc(100vh-350px)] p-4">
                   {loading ? 
-                  <div className="mx-30">
+                  <div className="mx-30 h-100vh">
                     <LoadingThreeDotsJumping/>
                   </div>
                   :(
                     <div>
                       {messageList.length <= 0 ? 
-                        <div className="flex flex-col items-center text-center gap-10">
+                        <div className="flex flex-col items-center text-center gap-4 md:gap-10">
                           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
                             📚 What do you need help with today?
                           </h2>
