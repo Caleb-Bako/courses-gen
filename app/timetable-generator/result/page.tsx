@@ -197,7 +197,7 @@ export default function TimetableResultPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      {isLoading ? <LoadingThreeDotsJumping/> :(
+      {isLoading ? <LoadingThreeDotsJumping color="#b123e5ff"/> :(
         <div>
 
       <motion.header

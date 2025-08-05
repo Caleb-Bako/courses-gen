@@ -15,7 +15,7 @@ import {
 } from "@/components/animations/dashboardanimation"
 import { Badge } from "@/components/ui/badge"
 import LoadingThreeDotsJumping from "@/components/animations/loading"
-import { supabase } from "@/supabaseClient"
+import { userSession } from "@/components/SupabaseFunctions/Retrieve/retrieveUserData"
 
 export default function DashboardPage() {
   const { user } = useUser()
@@ -39,16 +39,10 @@ export default function DashboardPage() {
       const userId = user?.id
       if (!userId) return
 
-      const { data: historyData } = await supabase
-        .from("chat_sessions")
-        .select()
-        .eq("user_id", userId)
+      const historyData = await userSession(userId,"chat_sessions","user_id")
       setHistory(historyData || [])
 
-      const { data: sessionData } = await supabase
-        .from("student_courses")
-        .select()
-        .eq("chat_id", userId)
+      const sessionData = await userSession(userId,"student_courses","chat_id")
       setSession(sessionData || [])
     }
 
@@ -59,7 +53,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {loading ? <LoadingThreeDotsJumping/> :(
+      {loading ? <LoadingThreeDotsJumping color="#2555f5ff"/> :(
       <div className="container mx-auto px-4 py-8">
         <AnimatedWrapper variant="staggerContainer">
           <AnimatedWrapper variant="fadeInUp">
@@ -349,5 +343,5 @@ export default function DashboardPage() {
 //Whats the pitch...whats the selling idea..what is it trying to achieve
 //Loading function accepting colors
 //NavBar
-//Title Creation for chats
+//Title Creation for chats => user first prompt + number of chat + 1
 //Supabase and Clerk Auth --> Read on Supabase RLS

@@ -255,7 +255,7 @@ export default function TimetableGeneratorPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      {loading ? <LoadingThreeDotsJumping/> :(
+      {loading ? <LoadingThreeDotsJumping color="#25f52fff"/> :(
         <div>
       <motion.header
         className="bg-white border-b"

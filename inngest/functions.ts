@@ -1,6 +1,8 @@
 import { supabase } from "@/supabaseClient";
 import { inngest } from "./client";
 import { createAgent, gemini } from '@inngest/agent-kit';
+import { checkPrompts } from "@/components/SupabaseFunctions/Retrieve/retrieveUserData";
+import { promptCaching } from "@/components/SupabaseFunctions/Post/insertData";
 type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 interface Course {
   name: string
@@ -97,11 +99,12 @@ export function createAiTimeTableAgent({ allCourses }: { allCourses: string }) {
     const promptKey = JSON.stringify({ allCourses, message });
 
     // Cache check
-    const { data: existing, error } = await supabase
-      .from("prompt_cache")
-      .select("reponse")
-      .eq("prompt_key", promptKey)
-      .single();
+    const existing = await checkPrompts(promptKey);
+    // const { data: existing} = await supabase
+    //   .from("prompt_cache")
+    //   .select("reponse")
+    //   .eq("prompt_key", promptKey)
+    //   .single();
 
     if (existing) {
       console.log("✅ Using cached response");
@@ -115,11 +118,11 @@ export function createAiTimeTableAgent({ allCourses }: { allCourses: string }) {
     ).join("\n\n");
 
     const result = await agent.run(conversation);
-
-    await supabase.from("prompt_cache").insert({
-      prompt_key: promptKey,
-      reponse: result,
-    });
+    await promptCaching( promptKey,result)
+    // await supabase.from("prompt_cache").insert({
+    //   prompt_key: promptKey,
+    //   reponse: result,
+    // });
 
     return result;
   }

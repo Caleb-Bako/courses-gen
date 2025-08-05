@@ -14,7 +14,8 @@ import { useParams, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import LoadingThreeDotsJumping from "@/components/animations/loading"
-import { supabase } from "@/supabaseClient"
+import { createSession, insertCourses, insertMessage, updateContent } from "@/components/SupabaseFunctions/Post/insertData"
+import { retrieveMessages, retrieveTableId, userSession } from "@/components/SupabaseFunctions/Retrieve/retrieveUserData"
 
 type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday"
 
@@ -35,9 +36,9 @@ interface Course {
   Department: string
 }
 
-interface History {
-  title: string
-}
+// interface History {
+//   title: string
+// }
 
 // Animation variants
 const fadeInUp = {
@@ -74,26 +75,14 @@ export default function TimetableChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const [grouped, setGrouped] = useState<Record<Weekday, Course[]>>({
-    Sunday: [],
-    Monday: [],
-    Tuesday: [],
-    Wednesday: [],
-    Thursday: [],
-    Friday: [],
-    Saturday: [],
+    Sunday: [],Monday: [],Tuesday: [],Wednesday: [],Thursday: [],Friday: [],Saturday: [],
   })
 
   const [priorityGrouped, setPriorityGrouped] = useState<Record<Weekday, Course[]>>({
-    Sunday: [],
-    Monday: [],
-    Tuesday: [],
-    Wednesday: [],
-    Thursday: [],
-    Friday: [],
-    Saturday: [],
+    Sunday: [],Monday: [],Tuesday: [],Wednesday: [],Thursday: [],Friday: [],Saturday: [],
   })
 
-  const [chatHistory, setChatHistory] = useState<History[]>([])
+  const [chatHistory, setChatHistory] =  useState<any[]>([])
 
   function setLoadingAnimation(){
     setLoader(true)
@@ -113,7 +102,7 @@ export default function TimetableChatPage() {
 
       const init = async () => {
         const saved = localStorage.getItem("ai-chat-data")
-        retrieveChatHistory(userId)
+        retrieveChatHistory()
         //if params(session.id) exist then retrieve old messsages
         if (params.session.includes("new")) {
           if (saved) {
@@ -125,27 +114,14 @@ export default function TimetableChatPage() {
           setLoading(true);
           setSessionId(params.session)
           //Loading State false
-          const { data: history } = await supabase
-            .from("chat_sessions")
-            .select("title")
-            .eq("id", params.session)
-            .eq("user_id",userId)
-            .select()
-            .single()
+          const history = await retrieveTableId(params.session)
+          setTableId(history)
+          const retrievedMessages = await retrieveMessages(params.session)
 
-          setTableId(history?.table)
-
-          const { data: oldMessages } = await supabase
-            .from("chat_messages")
-            .select("role, content")
-            .eq("chat_id", params.session)
-            .order("created_at", { ascending: true })
-
-
-          if (oldMessages) {
+          if (retrievedMessages) {
             console.log("Message found")
             setMessageList(
-              (oldMessages || []).map((msg) => ({
+              (retrievedMessages || []).map((msg) => ({
                 ...msg,
                 type: "text",
               })),
@@ -173,17 +149,16 @@ export default function TimetableChatPage() {
     }
   }, [messageList])
 
-  const retrieveChatHistory = async (id: string | null | undefined) => {
-    const { data: history, error } = await supabase.from("chat_sessions").select("title").eq("user_id", id)
-
-    if (history) {
-      setChatHistory(history)
-    }
+  const retrieveChatHistory = async () => {
+    const id = userId?? "";
+    const history = await userSession(id,"chat_sessions","user_id",)
+    setChatHistory(history || [])
   }
 
   const handleSubmit = async (e?: FormEvent, overrideText?: string) => {
     if (e) e.preventDefault();
     // if (!chatId) return;
+    const id = userId?? "";
     const text = overrideText ?? input;
     if(sessionId){
       console.log("Old Session")
@@ -192,12 +167,7 @@ export default function TimetableChatPage() {
       setInput("")
       setIsLoading(true)
       setShowTyping(true) // Show typing indicator
-      await supabase.from("chat_messages").insert({
-        chat_id: sessionId,
-        role: "user",
-        content: text,
-      })
-
+      await insertMessage(sessionId,"user",text)
       // 2. Send to backend AI API
       const result = await fetch("../api/ai-timtable-chat", {
         method: "POST",
@@ -221,25 +191,14 @@ export default function TimetableChatPage() {
       pollRunStatus(runId,sessionId)
     }else{
       console.log("New Session")
-      const { data: session } = await supabase
-        .from("student_courses")
-        .insert({
-          chat_id: userId,
-          Courses: grouped,
-          Priority_Grouped: priorityGrouped,
-        })
-        .select()
-        .single()
+      const session = await insertCourses(id,grouped,priorityGrouped)
   
       if (session) {
-        const { data: sess } = await supabase
-          .from("chat_sessions")
-          .insert({ user_id: userId, title: `Chat for `, table: session?.id })
-          .select()
-          .single()
+        const title = chatHistory.length + 1;
+        const sess = await createSession(id,`Study TimeTable +${title}`,session)
   
-        setSessionId(sess?.id)
-        setTableId(session?.id)
+        setSessionId(sess)
+        setTableId(session)
         //1
         const userMsg = { content: text, role: "user", type: "text" }
         setMessageList((prev) => [...prev, userMsg])
@@ -248,11 +207,7 @@ export default function TimetableChatPage() {
         setShowTyping(true) // Show typing indicator
   
         // 1. Save user message to Supabase
-        await supabase.from("chat_messages").insert({
-          chat_id: sess?.id,
-          role: "user",
-          content: text,
-        })
+        await insertMessage(sess,"user",text)
   
         // 2. Send to backend AI API
         const result = await fetch("../api/ai-timtable-chat", {
@@ -276,7 +231,7 @@ export default function TimetableChatPage() {
         }
   
         // 3. Save AI response to Supabase
-        pollRunStatus(runId,sess?.id)
+        pollRunStatus(runId,sess)
       }
     }
   }
@@ -296,13 +251,7 @@ export default function TimetableChatPage() {
           role: "assistant",
           type: "text",
         }
-
-        await supabase.from("chat_messages").insert({
-          chat_id: id,
-          role: "assistant",
-          content: aiMessage.content,
-        })
-
+        await insertMessage(id,"assistant",aiMessage.content)
         // 4. Update UI
         setMessageList((prev) => [...prev, aiMessage])
         setIsLoading(false)
@@ -361,8 +310,7 @@ export default function TimetableChatPage() {
 
         updates[day].push({ Day: day, Course: cleanedCourse, Start: start, End: end })
       })
-
-      await supabase.from("student_courses").update({ schedule: updates }).eq("id", tableId)
+      await updateContent(updates,tableId);
 
       const stepData = {
        step:3
@@ -390,7 +338,7 @@ export default function TimetableChatPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      {loader ? <LoadingThreeDotsJumping/>:(
+      {loader ? <LoadingThreeDotsJumping color="#2555f5ff"/>:(
         <div>
       <motion.header
         className="bg-white border-b"
@@ -437,7 +385,7 @@ export default function TimetableChatPage() {
                   >
                     <BookOpen className="h-5 w-5" />
                   </motion.div>
-                  <span>Your Courses</span>
+                  <span>Your Chats</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -486,7 +434,7 @@ export default function TimetableChatPage() {
                 <ScrollArea className="h-[calc(100vh-350px)] p-4">
                   {loading ? 
                   <div className="mx-30 h-100vh">
-                    <LoadingThreeDotsJumping/>
+                    <LoadingThreeDotsJumping color="#25f52fff"/>
                   </div>
                   :(
                     <div>

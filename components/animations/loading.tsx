@@ -2,7 +2,7 @@
 
 import { motion, Variants } from "motion/react"
 
-function LoadingThreeDotsJumping() {
+function LoadingThreeDotsJumping({color}:{color:string}) {
     const dotVariants: Variants = {
         jump: {
             y: -30,
@@ -21,10 +21,10 @@ function LoadingThreeDotsJumping() {
             transition={{ staggerChildren: -0.2, staggerDirection: -1 }}
             className="container h-screen bg-grey-500 opacity-50"
         >
+            <motion.div className="dot"variants={dotVariants} />
             <motion.div className="dot" variants={dotVariants} />
             <motion.div className="dot" variants={dotVariants} />
-            <motion.div className="dot" variants={dotVariants} />
-            <StyleSheet />
+            <StyleSheet color={color}/>
         </motion.div>
     )
 }
@@ -32,7 +32,7 @@ function LoadingThreeDotsJumping() {
 /**
  * ==============   Styles   ================
  */
-function StyleSheet() {
+function StyleSheet({color}:{color:string}) {
     return (
         <style>
             {`
@@ -47,12 +47,14 @@ function StyleSheet() {
                 width: 20px;
                 height: 20px;
                 border-radius: 50%;
-                background-color: #2555f5ff;
+                background-color: ${color};
                 will-change: transform;
             }
             `}
         </style>
     )
 }
-
+//#2555f5ff
+//#25f52fff
+//#b123e5ff
 export default LoadingThreeDotsJumping
