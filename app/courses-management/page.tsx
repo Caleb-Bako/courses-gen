@@ -104,14 +104,6 @@ export default function CarryOverPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <UnderConstructionDialog courses={courses} setCourses={setCourses} open={open} onOpenChange={setOpen} limit={isOverLimit}/>
-      {}
-      <div>
-        {courses.map((course)=>(
-            <div>
-
-            </div>
-        ))}
-      </div>
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-4">

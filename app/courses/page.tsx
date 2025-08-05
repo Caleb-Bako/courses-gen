@@ -101,7 +101,7 @@ const filteredCourses = courses.filter((course) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      {loading ? <LoadingThreeDotsJumping/>:(
+      {loading ? <LoadingThreeDotsJumping color="#b123e5ff"/>:(
         <div>
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
