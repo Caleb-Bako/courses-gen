@@ -13,6 +13,7 @@ import {ArrowLeft,Save,Plus,Trash2,GraduationCap,AlertCircle,CheckCircle2,BookOp
 import Link from "next/link"
 import { useState } from "react"
 import { UnderConstructionDialog } from "@/components/ConstructionDialog"
+import LoadingThreeDotsJumping from "@/components/animations/loading"
 
 interface Course {
   id: number
@@ -39,6 +40,7 @@ export default function CarryOverPage() {
   const currentCredits = courses.reduce((total, course) => total + course.units, 0)
   const remainingCredits = totalCreditLimit - currentCredits
   const progressPercentage = (currentCredits / totalCreditLimit) * 100
+   const [loading, setLoading] = useState(false)
 
   const addCourse = () => {
     const newCourse: Course = {
@@ -92,23 +94,27 @@ export default function CarryOverPage() {
 
   const isOverLimit = currentCredits > totalCreditLimit
 
-  function showCoursesList(){
-    if(isOverLimit){
-        setOpen(true);
-    }else{
+  // function showCoursesList(){
+  //   if(isOverLimit){
+  //       setOpen(true);
+  //   }else{
        
-    }
-  }
+  //   }
+  // }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
+     {loading ? (
+        <LoadingThreeDotsJumping color="#25f52fff" />
+      ) : (
+      <div>
       <UnderConstructionDialog courses={courses} setCourses={setCourses} open={open} onOpenChange={setOpen} limit={isOverLimit}/>
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <Link href="/dashboard">
-              <Button variant="ghost" size="sm">
+              <Button onClick={()=>setLoading(true)} variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
@@ -500,6 +506,8 @@ export default function CarryOverPage() {
           </motion.div>
         </motion.div>
       </div>
+      </div>
+      )}
     </div>
   )
 }
