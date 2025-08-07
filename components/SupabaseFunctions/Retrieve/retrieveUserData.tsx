@@ -41,16 +41,20 @@ export async function retrieveTableId(id:string) {
         throw new Error('Failed to add message')
     }
 }
-
-export async function checkPrompts(promptKey:string) {
+export async function retrieveTableData(id:string) {
     try {
-        const { data: existing} = await supabase
-        .from("prompt_cache")
-        .select("reponse")
-        .eq("prompt_key", promptKey)
-        .single();
-        console.log("Done getting prompt")
-        return existing;
+        const { data} = await supabase.from("student_courses").select("Priority_Grouped, schedule").eq("id", id)
+        return data;        
+    } catch (error: any) {
+        console.error('Error adding message:', error.message)
+        throw new Error('Failed to add message')
+    }
+
+}
+export async function retrieveResults(){
+    try {
+        const { data } = await supabase.from("student_courses").select("Courses")
+        return data;
     } catch (error: any) {
         console.error('Error adding message:', error.message)
         throw new Error('Failed to add message')

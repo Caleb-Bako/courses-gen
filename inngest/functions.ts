@@ -1,7 +1,5 @@
 import { inngest } from "./client";
 import { createAgent, gemini } from '@inngest/agent-kit';
-import { checkPrompts } from "@/components/SupabaseFunctions/Retrieve/retrieveUserData";
-import { promptCaching } from "@/components/SupabaseFunctions/Post/insertData";
 import { createClient } from "@supabase/supabase-js";
 type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 interface Course {

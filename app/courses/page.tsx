@@ -9,7 +9,7 @@ import { ArrowLeft, Search, Filter, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import LoadingThreeDotsJumping from "@/components/animations/loading"
-import { supabase } from "@/supabaseClient"
+import { retrieveResults } from "@/components/SupabaseFunctions/Retrieve/retrieveUserData"
 
 interface Course {
   name: string
@@ -36,13 +36,8 @@ export default function CourseSelectionPage() {
 
 useEffect(() => {
   const fetchCourses = async () => {
-    const { data, error } = await supabase.from("student_courses").select("Courses")
-
-    if (error) {
-      console.error("Error fetching courses:", error)
-      return
-    }
-
+    // const { data, error } = await supabase.from("student_courses").select("Courses")
+    const data = await retrieveResults();
     if (data && data.length > 0) {
       const allFlatCourses: Course[] = data.flatMap((row) => {
       const dayBasedCourses = row.Courses // { Monday: [...], ... }

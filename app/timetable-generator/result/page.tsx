@@ -8,7 +8,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import LoadingThreeDotsJumping from "@/components/animations/loading"
-import { supabase } from "@/supabaseClient"
+import { retrieveTableData } from "@/components/SupabaseFunctions/Retrieve/retrieveUserData"
 
 type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday"
 
@@ -117,12 +117,8 @@ export default function TimetableResultPage() {
   }, [])
 
   const getTimeTable = async (id: string) => {
-    const { data, error } = await supabase.from("student_courses").select("Priority_Grouped, schedule").eq("id", id)
-
-    if (error) {
-      console.error("❌ Failed to fetch timetable:", error)
-      return
-    }
+    // const { data, error } = await supabase.from("student_courses").select("Priority_Grouped, schedule").eq("id", id)
+    const data = await retrieveTableData(id);
 
     if (data && data.length > 0) {
       const entry = data[0]
