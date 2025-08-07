@@ -78,10 +78,15 @@ type UpdatesRecord = Record<Weekday, Update[]>;
     }
     export async function promptCaching(promptKey:string,result:object) {
         try {
-            await supabase.from("prompt_cache").insert({
+            const{data, error} = await supabase.from("prompt_cache").insert({
             prompt_key: promptKey,
             reponse: result,
             });
+            if (error) {
+            console.error("Insert error:", error.message, error.details);
+            } else {
+            console.log("Done Caching:", data);
+            }
         } catch (error: any) {
             console.error('Error creating session:', error.message)
             throw new Error('Failed to add session')

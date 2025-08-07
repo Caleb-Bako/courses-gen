@@ -195,7 +195,7 @@ export default function TimetableChatPage() {
   
       if (session) {
         const title = chatHistory.length + 1;
-        const sess = await createSession(id,`Study TimeTable +${title}`,session)
+        const sess = await createSession(id,`Study TimeTable ${title}`,session)
   
         setSessionId(sess)
         setTableId(session)

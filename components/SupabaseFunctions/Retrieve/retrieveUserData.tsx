@@ -49,6 +49,7 @@ export async function checkPrompts(promptKey:string) {
         .select("reponse")
         .eq("prompt_key", promptKey)
         .single();
+        console.log("Done getting prompt")
         return existing;
     } catch (error: any) {
         console.error('Error adding message:', error.message)
