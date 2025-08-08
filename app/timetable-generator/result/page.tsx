@@ -113,6 +113,8 @@ export default function TimetableResultPage() {
       const { tableId,sessionId } = JSON.parse(saved)
       setSessionId(sessionId);
       getTimeTable(tableId)
+    }else{
+      setSessionId("new");
     }
   }, [])
 

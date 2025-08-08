@@ -76,7 +76,7 @@ export default function Home() {
                 </Button>
               </motion.div>
             </Link>
-            <Link href="/">
+            <Link href="/doc/studyplan_ai_documentation.docx" download="StudyPlan_AI_Documentation.docx">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button variant="outline" size="lg" className="px-8 py-3 bg-transparent">
                   View Documentation

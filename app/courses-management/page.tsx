@@ -22,6 +22,7 @@ interface Course {
   units: number
   category: string
   description: string
+  section:string
 }
 
 export default function CarryOverPage() {
@@ -34,6 +35,7 @@ export default function CarryOverPage() {
       units: 3,
       category: "calculation",
       description: "Advanced calculus and mathematical analysis",
+      section:"Semester Course"
     },
   ])
   const [open, setOpen] = useState(false);
@@ -50,6 +52,7 @@ export default function CarryOverPage() {
       units: 0,
       category: "",
       description: "",
+      section:""
     }
     setCourses([...courses, newCourse])
   }
@@ -94,13 +97,6 @@ export default function CarryOverPage() {
 
   const isOverLimit = currentCredits > totalCreditLimit
 
-  // function showCoursesList(){
-  //   if(isOverLimit){
-  //       setOpen(true);
-  //   }else{
-       
-  //   }
-  // }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -329,7 +325,23 @@ export default function CarryOverPage() {
                                 </div>
 
                                 {/* Right Column */}
+                                
                                 <div className="space-y-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`units-${course.id}`}>Course Section</Label>
+                                    <Select
+                                      value={course.section}
+                                      onValueChange={(value) => updateCourse(course.id, "section", value)}
+                                    >
+                                      <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-green-500">
+                                        <SelectValue placeholder="Select course section" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Semester">Semester's Course</SelectItem>
+                                        <SelectItem value="Carry-Over">Carry-Over Course</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
                                   <div className="space-y-2">
                                     <Label htmlFor={`units-${course.id}`}>Credit Units *</Label>
                                     <Select

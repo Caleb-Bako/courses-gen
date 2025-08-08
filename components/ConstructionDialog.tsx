@@ -18,6 +18,7 @@ interface Course {
   units: number
   category: string
   description: string
+  section:string
 }
 interface UnderConstructionDialogProps {
   open: boolean
@@ -86,7 +87,7 @@ export function UnderConstructionDialog({
             <p>
               💡 Tip: Consider removing <strong>1–2 unit courses</strong>. This reduces the total
               faster with less impact on your main academic load. Some elective or skill-based
-              courses often carry lower units.
+              courses often carry lower units. Note you cannot remove carry-over courses.
             </p>
           </div>
 
@@ -104,14 +105,16 @@ export function UnderConstructionDialog({
                   <div className="font-semibold">{course.code}</div>
                   <div className="text-xs">{course.units} unit(s)</div>
                 </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => removeCourse(course.id)}
-                  className="text-red-500 hover:bg-red-100"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {course.section !="Carry-Over" && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => removeCourse(course.id)}
+                    className="text-red-500 hover:bg-red-100"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             ))}
           </div>

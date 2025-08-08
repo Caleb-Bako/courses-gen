@@ -345,3 +345,8 @@ export default function DashboardPage() {
 //NavBar
 //Title Creation for chats => user first prompt + number of chat + 1
 //Supabase and Clerk Auth --> Read on Supabase RLS
+//look at localStorage
+//Courses search bar
+//Documentation
+//reduce headers and input place holders font size 
+//adjust course management form size
