@@ -350,3 +350,5 @@ export default function DashboardPage() {
 //Documentation
 //reduce headers and input place holders font size 
 //adjust course management form size
+// One of the aims also for the project is overtime have a database that is filled with universities and their various courses which are up to date and make it as an api for people to use
+

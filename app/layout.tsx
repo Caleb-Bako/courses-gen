@@ -9,8 +9,8 @@ import {
 } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Bell, Calendar, Settings, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Calendar } from "lucide-react";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,6 +60,7 @@ export default function RootLayout({
             </div>
           </header>
           {children}
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>
