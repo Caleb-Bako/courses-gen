@@ -2,8 +2,7 @@
 
 > **Students using StudyPlan AI reduced their academic planning time by 50%** — spending less time building schedules and more time actually studying.
 
-![StudyPlan AI Screenshot](./screenshot.png)
-*Screenshot placeholder — replace with actual app screenshot*
+<img width="1897" height="894" alt="Screenshot 2026-05-11 093101" src="https://github.com/user-attachments/assets/f40391f9-41ec-4410-9eeb-333cc87fddba" />
 
 ---
 
